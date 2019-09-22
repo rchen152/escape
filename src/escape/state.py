@@ -2,8 +2,6 @@
 
 import pygame
 from pygame.locals import *
-# Because pytype can't see pygame.locals.*:
-# pytype: disable=name-error
 
 
 WINSIZE = (1024, 576)
