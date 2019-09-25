@@ -26,6 +26,9 @@ class GameState(abc.ABC):
     def draw(self):
         pass
 
+    def cleanup(self):
+        pass
+
     def handle_events(self, events):
         for event in events:
             self.handle_quit(event)
@@ -47,9 +50,17 @@ class GameState(abc.ABC):
     def run(self):
         while self.active:
             self.handle_events(pygame.event.get())
+        self.cleanup()
 
 
 class TitleCard(GameState):
+
+    _TIMED_QUIT = pygame.USEREVENT
+    _DISPLAY_TIME_MS = 5000
+
+    def __init__(self, screen):
+        super().__init__(screen)
+        pygame.time.set_timer(self._TIMED_QUIT, self._DISPLAY_TIME_MS)
 
     def draw(self):
         path = os.path.join(os.path.dirname(__file__), 'img', 'title_card.png')
@@ -58,6 +69,14 @@ class TitleCard(GameState):
         self.screen.fill(_RED)
         self.screen.blit(img, (0, 0))
         pygame.display.update()
+
+    def handle_quit(self, event):
+        super().handle_quit(event)
+        if event.type == self._TIMED_QUIT:
+            self.active = False
+
+    def cleanup(self):
+        pygame.time.set_timer(self._TIMED_QUIT, 0)
 
 
 class Game(GameState):

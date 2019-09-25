@@ -20,10 +20,14 @@ class MockGame(state.GameState):
 
     def __init__(self, screen):
         self.drawn = 0
+        self.clean = False
         super().__init__(screen)
 
     def draw(self):
         self.drawn += 1
+
+    def cleanup(self):
+        self.clean = True
 
 
 class MockScreen:
@@ -104,6 +108,13 @@ class GameStateTest(unittest.TestCase):
         self.assertFalse(self.state.screen.fullscreen)
         self.assertEqual(self.state.drawn, 3)
         self.assertFalse(self.state.active)
+
+    def test_cleanup(self):
+        self.assertFalse(self.state.clean)
+        with unittest.mock.patch.object(pygame.event, 'get') as mock_get:
+            mock_get.return_value = [MockEvent(QUIT)]
+            self.state.run()
+        self.assertTrue(self.state.clean)
 
 
 class TitleCardTest(unittest.TestCase):
