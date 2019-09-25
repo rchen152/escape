@@ -85,15 +85,6 @@ class GameStateTest(unittest.TestCase):
         self.assertFalse(self.state.screen.fullscreen)
         self.assertEqual(self.state.drawn, 2)
 
-    def test_multiple_events(self):
-        self.state.screen.fullscreen = False
-        with unittest.mock.patch.object(
-                pygame.display, 'set_mode', self.mock_set_mode):
-            self.state.handle_events([MockEvent(KEYDOWN, K_f), MockEvent(QUIT)])
-        self.assertTrue(self.state.screen.fullscreen)
-        self.assertEqual(self.state.drawn, 2)
-        self.assertFalse(self.state.active)
-
     def test_run(self):
         self.state.screen.fullscreen = False
         with unittest.mock.patch.object(
@@ -102,11 +93,12 @@ class GameStateTest(unittest.TestCase):
                 mock_get.return_value = [
                     MockEvent(KEYDOWN, K_f),
                     MockEvent(KEYDOWN, K_f),
+                    MockEvent(KEYDOWN, K_f),
                     MockEvent(KEYDOWN, K_q),
                 ]
                 self.state.run()
-        self.assertFalse(self.state.screen.fullscreen)
-        self.assertEqual(self.state.drawn, 3)
+        self.assertTrue(self.state.screen.fullscreen)
+        self.assertEqual(self.state.drawn, 4)
         self.assertFalse(self.state.active)
 
     def test_cleanup(self):

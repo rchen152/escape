@@ -16,11 +16,19 @@ def _keypressed(event, key):
 
 
 class GameState(abc.ABC):
+    """Base class for tracking game state.
+
+    run() checks the event queue in a loop until a quit event is received. For
+    each event, every handle_* method is called until the event is consumed. A
+    handler reports that it consumed an event by returning True.
+    """
 
     def __init__(self, screen):
         self.screen = screen
         self.active = True
         self.draw()
+        self._event_handlers = [
+            getattr(self, x) for x in dir(self) if x.startswith('handle_')]
 
     @abc.abstractmethod
     def draw(self):
@@ -29,27 +37,29 @@ class GameState(abc.ABC):
     def cleanup(self):
         pass
 
-    def handle_events(self, events):
-        for event in events:
-            self.handle_quit(event)
-            self.handle_fullscreen(event)
-
     def handle_quit(self, event):
         if event.type == QUIT or _keypressed(event, K_q):
             self.active = False
+            return True
+        return False
 
     def handle_fullscreen(self, event):
         if not _keypressed(event, K_f):
-            return
+            return False
         if self.screen.get_flags() & FULLSCREEN:
             pygame.display.set_mode(WINSIZE)
         else:
             pygame.display.set_mode(WINSIZE, FULLSCREEN)
         self.draw()
+        return True
 
     def run(self):
         while self.active:
-            self.handle_events(pygame.event.get())
+            for event in pygame.event.get():
+                for handle in self._event_handlers:
+                    consumed = handle(event)
+                    if consumed:
+                        break
         self.cleanup()
 
 
@@ -71,9 +81,10 @@ class TitleCard(GameState):
         pygame.display.update()
 
     def handle_quit(self, event):
-        super().handle_quit(event)
         if event.type == self._TIMED_QUIT:
             self.active = False
+            return True
+        return super().handle_quit(event)
 
     def cleanup(self):
         pygame.time.set_timer(self._TIMED_QUIT, 0)
