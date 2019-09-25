@@ -5,12 +5,10 @@ from . import state
 
 def main():
     pygame.init()
-    pygame.display.set_mode(state.WINSIZE)
+    screen = pygame.display.set_mode(state.WINSIZE)
     pygame.display.set_caption('Kitty Escape')
-    game_state = state.GameState()
-
-    while game_state.active:
-        game_state.handle_events(pygame.event.get())
+    state.TitleCard(screen).run()
+    state.Game(screen).run()
 
 
 if __name__ == '__main__':
