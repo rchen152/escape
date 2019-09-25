@@ -6,9 +6,11 @@ from pygame.locals import *
 import os
 
 
-WINSIZE = (1024, 576)
-_RED = (200, 25, 25)
+WINRECT = pygame.Rect(0, 0, 1024, 576)
+
 _BLACK = (0, 0, 0)
+_GREY = (200, 200, 200)
+_RED = (200, 25, 25)
 
 
 def _keypressed(event, key):
@@ -47,9 +49,9 @@ class GameState(abc.ABC):
         if not _keypressed(event, K_f):
             return False
         if self.screen.get_flags() & FULLSCREEN:
-            pygame.display.set_mode(WINSIZE)
+            pygame.display.set_mode(WINRECT.size)
         else:
-            pygame.display.set_mode(WINSIZE, FULLSCREEN)
+            pygame.display.set_mode(WINRECT.size, FULLSCREEN)
         self.draw()
         return True
 
@@ -75,7 +77,7 @@ class TitleCard(GameState):
     def draw(self):
         path = os.path.join(os.path.dirname(__file__), 'img', 'title_card.png')
         img = pygame.image.load(path)
-        img = pygame.transform.scale(img.convert_alpha(), WINSIZE)
+        img = pygame.transform.scale(img.convert_alpha(), WINRECT.size)
         self.screen.fill(_RED)
         self.screen.blit(img, (0, 0))
         pygame.display.update()
@@ -93,5 +95,13 @@ class TitleCard(GameState):
 class Game(GameState):
 
     def draw(self):
-        self.screen.fill(_BLACK)
+        self.screen.fill(_GREY)
+        x = WINRECT.width / 4
+        y = WINRECT.height / 4
+        w = WINRECT.width / 2
+        h = WINRECT.height / 2
+        back_wall = pygame.draw.rect(self.screen, _BLACK, (x, y, w, h), 5)
+        for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
+            pygame.draw.line(self.screen, _BLACK, getattr(WINRECT, corner),
+                             getattr(back_wall, corner), 5)
         pygame.display.update()

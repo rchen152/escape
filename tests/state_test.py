@@ -122,7 +122,8 @@ class GameTest(unittest.TestCase):
 
     def test_init(self):
         with unittest.mock.patch('pygame.display', autospec=True):
-            state.Game(MockScreen())
+            with unittest.mock.patch('pygame.draw', autospec=True):
+                state.Game(MockScreen())
 
 
 if __name__ == '__main__':

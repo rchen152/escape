@@ -13,7 +13,7 @@ def args():
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode(state.WINSIZE)
+    screen = pygame.display.set_mode(state.WINRECT.size)
     pygame.display.set_caption('Kitty Escape')
     if not args().skip_title:
         state.TitleCard(screen).run()
