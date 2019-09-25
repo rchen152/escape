@@ -7,6 +7,8 @@ import os
 
 
 WINRECT = pygame.Rect(0, 0, 1024, 576)
+_BACK_WALL = pygame.Rect(
+    WINRECT.w / 4, WINRECT.h / 4, WINRECT.w / 2, WINRECT.h / 2)
 
 _BLACK = (0, 0, 0)
 _GREY = (200, 200, 200)
@@ -96,12 +98,48 @@ class Game(GameState):
 
     def draw(self):
         self.screen.fill(_GREY)
-        x = WINRECT.width / 4
-        y = WINRECT.height / 4
-        w = WINRECT.width / 2
-        h = WINRECT.height / 2
-        back_wall = pygame.draw.rect(self.screen, _BLACK, (x, y, w, h), 5)
+        pygame.draw.rect(self.screen, _BLACK, _BACK_WALL, 5)
         for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
             pygame.draw.line(self.screen, _BLACK, getattr(WINRECT, corner),
-                             getattr(back_wall, corner), 5)
+                             getattr(_BACK_WALL, corner), 5)
         pygame.display.update()
+
+    def handle_click(self, event):
+        """Determines which wall was clicked."""
+        if event.type != MOUSEBUTTONUP or event.button != 1:
+            return False
+        if _BACK_WALL.collidepoint(event.pos):
+            # The back wall is a rectangle, so use built-in collision detection.
+            print('back wall')
+            return True
+        x, y = event.pos
+        if x == 0:
+            # To avoid divide-by-zero, special-case the leftmost edge.
+            print('left wall')
+            return True
+        # Compute the (absolute values of) the slope of the current position
+        # from the top left and bottom left corners of the screen and the slope
+        # of the screen itself.
+        down_slope = y / x
+        up_slope = (WINRECT.h - y) / x
+        # Compute the slope of the screen.
+        wall_slope = WINRECT.h / WINRECT.w
+        # Determine the position relative to the screen diagonals.
+        above_down_diagonal = down_slope < wall_slope
+        above_up_diagonal = up_slope > wall_slope
+        # The diagonals divide the screen into four triangles. Use the relative
+        # positions to determine which triangle we're in. Since we've already
+        # checked the back wall, the triangle corresponds to one of the other
+        # four walls.
+        if not above_down_diagonal and above_up_diagonal:
+            print('left wall')
+            return True
+        if above_down_diagonal and above_up_diagonal:
+            print('ceiling')
+            return True
+        if above_down_diagonal and not above_up_diagonal:
+            print('right wall')
+            return True
+        assert not above_down_diagonal and not above_up_diagonal
+        print('floor')
+        return True
