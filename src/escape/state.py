@@ -1,18 +1,26 @@
 """Game state."""
 
 import abc
+import enum
 import pygame
 from pygame.locals import *
 import os
 
 
 WINRECT = pygame.Rect(0, 0, 1024, 576)
-_BACK_WALL = pygame.Rect(
-    WINRECT.w / 4, WINRECT.h / 4, WINRECT.w / 2, WINRECT.h / 2)
 
 _BLACK = (0, 0, 0)
 _GREY = (200, 200, 200)
 _RED = (200, 25, 25)
+
+
+class View(enum.Enum):
+    DEFAULT = enum.auto()
+    BACK_WALL = enum.auto()
+    LEFT_WALL = enum.auto()
+    CEILING = enum.auto()
+    RIGHT_WALL = enum.auto()
+    FLOOR = enum.auto()
 
 
 def _keypressed(event, key):
@@ -96,27 +104,38 @@ class TitleCard(GameState):
 
 class Game(GameState):
 
-    def draw(self):
+    _BACK_WALL = pygame.Rect(
+        WINRECT.w / 4, WINRECT.h / 4, WINRECT.w / 2, WINRECT.h / 2)
+
+    def __init__(self, screen):
+        self.view = View.DEFAULT
+        super().__init__(screen)
+
+    def _draw_default(self):
         self.screen.fill(_GREY)
-        pygame.draw.rect(self.screen, _BLACK, _BACK_WALL, 5)
+        pygame.draw.rect(self.screen, _BLACK, self._BACK_WALL, 5)
         for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
             pygame.draw.line(self.screen, _BLACK, getattr(WINRECT, corner),
-                             getattr(_BACK_WALL, corner), 5)
+                             getattr(self._BACK_WALL, corner), 5)
         pygame.display.update()
 
-    def handle_click(self, event):
-        """Determines which wall was clicked."""
-        if event.type != MOUSEBUTTONUP or event.button != 1:
-            return False
-        if _BACK_WALL.collidepoint(event.pos):
+    def draw(self):
+        if self.view is View.DEFAULT:
+            self._draw_default()
+        else:
+            self.screen.fill(_GREY)
+            pygame.display.update()
+
+    def _handle_default_click(self, pos):
+        if self._BACK_WALL.collidepoint(pos):
             # The back wall is a rectangle, so use built-in collision detection.
-            print('back wall')
-            return True
-        x, y = event.pos
+            self.view = View.BACK_WALL
+            return
+        x, y = pos
         if x == 0:
             # To avoid divide-by-zero, special-case the leftmost edge.
-            print('left wall')
-            return True
+            self.view = View.LEFT_WALL
+            return
         # Compute the (absolute values of) the slope of the current position
         # from the top left and bottom left corners of the screen and the slope
         # of the screen itself.
@@ -132,14 +151,29 @@ class Game(GameState):
         # checked the back wall, the triangle corresponds to one of the other
         # four walls.
         if not above_down_diagonal and above_up_diagonal:
-            print('left wall')
-            return True
+            self.view = View.LEFT_WALL
+            return
         if above_down_diagonal and above_up_diagonal:
-            print('ceiling')
-            return True
+            self.view = View.CEILING
+            return
         if above_down_diagonal and not above_up_diagonal:
-            print('right wall')
-            return True
+            self.view = View.RIGHT_WALL
+            return
         assert not above_down_diagonal and not above_up_diagonal
-        print('floor')
+        self.view = View.FLOOR
+
+    def handle_click(self, event):
+        if event.type != MOUSEBUTTONUP or event.button != 1:
+            return False
+        if self.view is View.DEFAULT:
+            self._handle_default_click(event.pos)
+            self.draw()
+        return True
+
+    def handle_reset(self, event):
+        if not _keypressed(event, K_r):
+            return False
+        if self.view is not View.DEFAULT:
+            self.view = View.DEFAULT
+            self.draw()
         return True

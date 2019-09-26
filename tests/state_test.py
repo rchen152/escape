@@ -11,9 +11,14 @@ import unittest.mock
 
 class MockEvent:
 
-    def __init__(self, typ, key=None):
+    def __init__(self, typ, **kwargs):
         self.type = typ
-        self.key = key
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+
+def _click(x, y):
+    return MockEvent(MOUSEBUTTONUP, button=1, pos=(x, y))
 
 
 class MockGame(state.GameState):
@@ -66,14 +71,14 @@ class GameStateTest(unittest.TestCase):
 
     def test_quit_q(self):
         self.assertTrue(self.state.active)
-        self.state.handle_quit(MockEvent(KEYDOWN, K_q))
+        self.state.handle_quit(MockEvent(KEYDOWN, key=K_q))
         self.assertFalse(self.state.active)
 
     def test_fullscreen(self):
         self.state.screen.fullscreen = False
         with unittest.mock.patch.object(
                 pygame.display, 'set_mode', self.mock_set_mode):
-            self.state.handle_fullscreen(MockEvent(KEYDOWN, K_f))
+            self.state.handle_fullscreen(MockEvent(KEYDOWN, key=K_f))
         self.assertTrue(self.state.screen.fullscreen)
         self.assertEqual(self.state.drawn, 2)
 
@@ -81,7 +86,7 @@ class GameStateTest(unittest.TestCase):
         self.state.screen.fullscreen = True
         with unittest.mock.patch.object(
                 pygame.display, 'set_mode', self.mock_set_mode):
-            self.state.handle_fullscreen(MockEvent(KEYDOWN, K_f))
+            self.state.handle_fullscreen(MockEvent(KEYDOWN, key=K_f))
         self.assertFalse(self.state.screen.fullscreen)
         self.assertEqual(self.state.drawn, 2)
 
@@ -91,10 +96,10 @@ class GameStateTest(unittest.TestCase):
                 pygame.display, 'set_mode', self.mock_set_mode):
             with unittest.mock.patch.object(pygame.event, 'get') as mock_get:
                 mock_get.return_value = [
-                    MockEvent(KEYDOWN, K_f),
-                    MockEvent(KEYDOWN, K_f),
-                    MockEvent(KEYDOWN, K_f),
-                    MockEvent(KEYDOWN, K_q),
+                    MockEvent(KEYDOWN, key=K_f),
+                    MockEvent(KEYDOWN, key=K_f),
+                    MockEvent(KEYDOWN, key=K_f),
+                    MockEvent(KEYDOWN, key=K_q),
                 ]
                 self.state.run()
         self.assertTrue(self.state.screen.fullscreen)
@@ -120,10 +125,67 @@ class TitleCardTest(unittest.TestCase):
 
 class GameTest(unittest.TestCase):
 
-    def test_init(self):
-        with unittest.mock.patch('pygame.display', autospec=True):
-            with unittest.mock.patch('pygame.draw', autospec=True):
-                state.Game(MockScreen())
+    def setUp(self):
+        super().setUp()
+        self.num_updates = 0
+        self.display_patch = unittest.mock.patch(
+            'pygame.display', autospec=True)
+        self.draw_patch = unittest.mock.patch('pygame.draw', autospec=True)
+        mock_display = self.display_patch.start()
+        mock_display.update = self.mock_update
+        self.draw_patch.start()
+        self.game = state.Game(MockScreen())
+
+    def tearDown(self):
+        super().tearDown()
+        self.display_patch.stop()
+        self.draw_patch.stop()
+
+    def mock_update(self):
+        self.num_updates += 1
+
+    def test_default_view(self):
+        self.assertEqual(self.game.view, state.View.DEFAULT)
+        self.assertEqual(self.num_updates, 1)
+
+    def test_back_wall_view(self):
+        self.game.handle_click(_click(state.WINRECT.w / 2, state.WINRECT.h / 2))
+        self.assertEqual(self.game.view, state.View.BACK_WALL)
+        self.assertEqual(self.num_updates, 2)
+
+    def test_left_wall_view(self):
+        self.game.handle_click(_click(0, 1))
+        self.assertEqual(self.game.view, state.View.LEFT_WALL)
+        self.assertEqual(self.num_updates, 2)
+
+    def test_ceiling_view(self):
+        self.game.handle_click(_click(1, 0))
+        self.assertEqual(self.game.view, state.View.CEILING)
+        self.assertEqual(self.num_updates, 2)
+
+    def test_right_wall_view(self):
+        self.game.handle_click(_click(state.WINRECT.w, 1))
+        self.assertEqual(self.game.view, state.View.RIGHT_WALL)
+        self.assertEqual(self.num_updates, 2)
+
+    def test_floor_view(self):
+        self.game.handle_click(_click(1, state.WINRECT.h))
+        self.assertEqual(self.game.view, state.View.FLOOR)
+        self.assertEqual(self.num_updates, 2)
+
+    def test_reset_view(self):
+        self.game.handle_click(_click(0, 1))
+        self.assertEqual(self.game.view, state.View.LEFT_WALL)
+        self.game.handle_reset(MockEvent(KEYDOWN, key=K_r))
+        self.assertEqual(self.game.view, state.View.DEFAULT)
+        self.assertEqual(self.num_updates, 3)
+
+    def test_skip_update(self):
+        consumed = self.game.handle_reset(MockEvent(KEYDOWN, key=K_r))
+        assert consumed  # make sure we actually reset the view
+        self.assertEqual(self.game.view, state.View.DEFAULT)
+        # We were already on the default view, so no need to redraw it.
+        self.assertEqual(self.num_updates, 1)
 
 
 if __name__ == '__main__':
