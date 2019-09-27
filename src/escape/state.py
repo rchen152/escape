@@ -1,26 +1,15 @@
 """Game state."""
 
 import abc
-import enum
 import pygame
 from pygame.locals import *
 import os
+from . import room
 
-
-WINRECT = pygame.Rect(0, 0, 1024, 576)
 
 _BLACK = (0, 0, 0)
 _GREY = (200, 200, 200)
 _RED = (200, 25, 25)
-
-
-class View(enum.Enum):
-    DEFAULT = enum.auto()
-    BACK_WALL = enum.auto()
-    LEFT_WALL = enum.auto()
-    CEILING = enum.auto()
-    RIGHT_WALL = enum.auto()
-    FLOOR = enum.auto()
 
 
 def _keypressed(event, key):
@@ -59,9 +48,9 @@ class GameState(abc.ABC):
         if not _keypressed(event, K_f):
             return False
         if self.screen.get_flags() & FULLSCREEN:
-            pygame.display.set_mode(WINRECT.size)
+            pygame.display.set_mode(room.RECT.size)
         else:
-            pygame.display.set_mode(WINRECT.size, FULLSCREEN)
+            pygame.display.set_mode(room.RECT.size, FULLSCREEN)
         self.draw()
         return True
 
@@ -87,7 +76,7 @@ class TitleCard(GameState):
     def draw(self):
         path = os.path.join(os.path.dirname(__file__), 'img', 'title_card.png')
         img = pygame.image.load(path)
-        img = pygame.transform.scale(img.convert_alpha(), WINRECT.size)
+        img = pygame.transform.scale(img.convert_alpha(), room.RECT.size)
         self.screen.fill(_RED)
         self.screen.blit(img, (0, 0))
         pygame.display.update()
@@ -104,76 +93,63 @@ class TitleCard(GameState):
 
 class Game(GameState):
 
-    _BACK_WALL = pygame.Rect(
-        WINRECT.w / 4, WINRECT.h / 4, WINRECT.w / 2, WINRECT.h / 2)
-
     def __init__(self, screen):
-        self.view = View.DEFAULT
+        self.view = room.View.DEFAULT
         super().__init__(screen)
 
     def _draw_default(self):
         self.screen.fill(_GREY)
-        pygame.draw.rect(self.screen, _BLACK, self._BACK_WALL, 5)
+        pygame.draw.rect(self.screen, _BLACK, room.BACK_WALL, 5)
         for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
-            pygame.draw.line(self.screen, _BLACK, getattr(WINRECT, corner),
-                             getattr(self._BACK_WALL, corner), 5)
+            pygame.draw.line(self.screen, _BLACK, getattr(room.RECT, corner),
+                             getattr(room.BACK_WALL, corner), 5)
         pygame.display.update()
 
     def draw(self):
-        if self.view is View.DEFAULT:
+        if self.view is room.View.DEFAULT:
             self._draw_default()
         else:
             self.screen.fill(_GREY)
+            font = pygame.font.Font(None, 80)
+            text = self.view.name
+            size = font.size(text)
+            ren = font.render(text, 0, _BLACK, _GREY)
+            self.screen.blit(
+                ren, ((room.RECT.w - size[0]) / 2, (room.RECT.h - size[1]) / 2))
             pygame.display.update()
 
     def _handle_default_click(self, pos):
-        if self._BACK_WALL.collidepoint(pos):
+        if room.at_edge(pos):
+            # In the default view, the edges of the screen border the (hidden)
+            # front wall.
+            self.view = room.View.FRONT_WALL
+            return
+        if room.BACK_WALL.collidepoint(pos):
             # The back wall is a rectangle, so use built-in collision detection.
-            self.view = View.BACK_WALL
+            self.view = room.View.BACK_WALL
             return
-        x, y = pos
-        if x == 0:
-            # To avoid divide-by-zero, special-case the leftmost edge.
-            self.view = View.LEFT_WALL
-            return
-        # Compute the (absolute values of) the slope of the current position
-        # from the top left and bottom left corners of the screen and the slope
-        # of the screen itself.
-        down_slope = y / x
-        up_slope = (WINRECT.h - y) / x
-        # Compute the slope of the screen.
-        wall_slope = WINRECT.h / WINRECT.w
-        # Determine the position relative to the screen diagonals.
-        above_down_diagonal = down_slope < wall_slope
-        above_up_diagonal = up_slope > wall_slope
-        # The diagonals divide the screen into four triangles. Use the relative
-        # positions to determine which triangle we're in. Since we've already
-        # checked the back wall, the triangle corresponds to one of the other
-        # four walls.
-        if not above_down_diagonal and above_up_diagonal:
-            self.view = View.LEFT_WALL
-            return
-        if above_down_diagonal and above_up_diagonal:
-            self.view = View.CEILING
-            return
-        if above_down_diagonal and not above_up_diagonal:
-            self.view = View.RIGHT_WALL
-            return
-        assert not above_down_diagonal and not above_up_diagonal
-        self.view = View.FLOOR
+        # Since we've already checked the front and back walls, the quadrant
+        # corresponds to one of the other four walls.
+        self.view = room.View(room.quadrant(pos).value)
 
     def handle_click(self, event):
         if event.type != MOUSEBUTTONUP or event.button != 1:
             return False
-        if self.view is View.DEFAULT:
+        if self.view is room.View.DEFAULT:
             self._handle_default_click(event.pos)
-            self.draw()
+        elif not room.at_edge(event.pos):
+            return False
+        else:
+            quadrant = room.quadrant(event.pos)
+            self.view = room.View(
+                room.ROTATIONS[self.view].get(quadrant, quadrant.value))
+        self.draw()
         return True
 
     def handle_reset(self, event):
         if not _keypressed(event, K_r):
             return False
-        if self.view is not View.DEFAULT:
-            self.view = View.DEFAULT
+        if self.view is not room.View.DEFAULT:
+            self.view = room.View.DEFAULT
             self.draw()
         return True

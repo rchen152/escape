@@ -1,5 +1,6 @@
 """Tests for escape.state."""
 
+from escape import room
 from escape import state
 
 import pygame
@@ -128,64 +129,74 @@ class GameTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.num_updates = 0
-        self.display_patch = unittest.mock.patch(
-            'pygame.display', autospec=True)
-        self.draw_patch = unittest.mock.patch('pygame.draw', autospec=True)
-        mock_display = self.display_patch.start()
-        mock_display.update = self.mock_update
-        self.draw_patch.start()
+        self.patches = {
+            mod: unittest.mock.patch(mod, autospec=True)
+            for mod in ('pygame.display', 'pygame.draw', 'pygame.font')}
+        self.mocks = {mod: patch.start() for mod, patch in self.patches.items()}
+        self.mocks['pygame.display'].update = self.mock_update
         self.game = state.Game(MockScreen())
 
     def tearDown(self):
         super().tearDown()
-        self.display_patch.stop()
-        self.draw_patch.stop()
+        for patch in self.patches.values():
+            patch.stop()
 
     def mock_update(self):
         self.num_updates += 1
 
     def test_default_view(self):
-        self.assertEqual(self.game.view, state.View.DEFAULT)
+        self.assertEqual(self.game.view, room.View.DEFAULT)
         self.assertEqual(self.num_updates, 1)
 
     def test_back_wall_view(self):
-        self.game.handle_click(_click(state.WINRECT.w / 2, state.WINRECT.h / 2))
-        self.assertEqual(self.game.view, state.View.BACK_WALL)
+        self.game.handle_click(_click(room.RECT.w / 2, room.RECT.h / 2))
+        self.assertEqual(self.game.view, room.View.BACK_WALL)
         self.assertEqual(self.num_updates, 2)
 
     def test_left_wall_view(self):
-        self.game.handle_click(_click(0, 1))
-        self.assertEqual(self.game.view, state.View.LEFT_WALL)
+        self.game.handle_click(_click(room.RECT.w / 8, room.RECT.h / 2))
+        self.assertEqual(self.game.view, room.View.LEFT_WALL)
         self.assertEqual(self.num_updates, 2)
 
     def test_ceiling_view(self):
-        self.game.handle_click(_click(1, 0))
-        self.assertEqual(self.game.view, state.View.CEILING)
+        self.game.handle_click(_click(room.RECT.w / 2, room.RECT.h / 8))
+        self.assertEqual(self.game.view, room.View.CEILING)
         self.assertEqual(self.num_updates, 2)
 
     def test_right_wall_view(self):
-        self.game.handle_click(_click(state.WINRECT.w, 1))
-        self.assertEqual(self.game.view, state.View.RIGHT_WALL)
+        self.game.handle_click(_click(room.RECT.w * 7 / 8, room.RECT.h / 2))
+        self.assertEqual(self.game.view, room.View.RIGHT_WALL)
         self.assertEqual(self.num_updates, 2)
 
     def test_floor_view(self):
-        self.game.handle_click(_click(1, state.WINRECT.h))
-        self.assertEqual(self.game.view, state.View.FLOOR)
+        self.game.handle_click(_click(room.RECT.w / 2, room.RECT.h * 7 / 8))
+        self.assertEqual(self.game.view, room.View.FLOOR)
+        self.assertEqual(self.num_updates, 2)
+
+    def test_front_wall_view(self):
+        self.game.handle_click(_click(0, 0))
+        self.assertEqual(self.game.view, room.View.FRONT_WALL)
         self.assertEqual(self.num_updates, 2)
 
     def test_reset_view(self):
-        self.game.handle_click(_click(0, 1))
-        self.assertEqual(self.game.view, state.View.LEFT_WALL)
+        self.game.handle_click(_click(room.RECT.w / 8, room.RECT.h / 2))
+        self.assertEqual(self.game.view, room.View.LEFT_WALL)
         self.game.handle_reset(MockEvent(KEYDOWN, key=K_r))
-        self.assertEqual(self.game.view, state.View.DEFAULT)
+        self.assertEqual(self.game.view, room.View.DEFAULT)
         self.assertEqual(self.num_updates, 3)
 
     def test_skip_update(self):
         consumed = self.game.handle_reset(MockEvent(KEYDOWN, key=K_r))
         assert consumed  # make sure we actually reset the view
-        self.assertEqual(self.game.view, state.View.DEFAULT)
+        self.assertEqual(self.game.view, room.View.DEFAULT)
         # We were already on the default view, so no need to redraw it.
         self.assertEqual(self.num_updates, 1)
+
+    def test_non_default_view(self):
+        self.game.handle_click(_click(room.RECT.w / 8, room.RECT.h / 2))
+        self.assertEqual(self.game.view, room.View.LEFT_WALL)
+        self.game.handle_click(_click(0, room.RECT.h / 2))
+        self.assertEqual(self.game.view, room.View.FRONT_WALL)
 
 
 if __name__ == '__main__':
