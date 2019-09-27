@@ -8,6 +8,7 @@ from . import room
 
 
 _BLACK = (0, 0, 0)
+_DARK_GREY = (190, 190, 190)
 _GREY = (200, 200, 200)
 _RED = (200, 25, 25)
 
@@ -98,25 +99,28 @@ class Game(GameState):
         super().__init__(screen)
 
     def _draw_default(self):
-        self.screen.fill(_GREY)
         pygame.draw.rect(self.screen, _BLACK, room.BACK_WALL, 5)
         for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
             pygame.draw.line(self.screen, _BLACK, getattr(room.RECT, corner),
                              getattr(room.BACK_WALL, corner), 5)
-        pygame.display.update()
+
+    def _draw_front_wall(self):
+        pygame.draw.rect(self.screen, _DARK_GREY, room.FRONT_DOOR, 5)
 
     def draw(self):
+        self.screen.fill(_GREY)
         if self.view is room.View.DEFAULT:
             self._draw_default()
+        elif self.view is room.View.FRONT_WALL:
+            self._draw_front_wall()
         else:
-            self.screen.fill(_GREY)
             font = pygame.font.Font(None, 80)
             text = self.view.name
             size = font.size(text)
             ren = font.render(text, 0, _BLACK, _GREY)
             self.screen.blit(
                 ren, ((room.RECT.w - size[0]) / 2, (room.RECT.h - size[1]) / 2))
-            pygame.display.update()
+        pygame.display.update()
 
     def _handle_default_click(self, pos):
         if room.at_edge(pos):

@@ -4,6 +4,7 @@ import pygame
 
 RECT = pygame.Rect(0, 0, 1024, 576)
 BACK_WALL = pygame.Rect(RECT.w / 4, RECT.h / 4, RECT.w / 2, RECT.h / 2)
+FRONT_DOOR = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
 
 
 class View(enum.Enum):
