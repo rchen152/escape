@@ -17,6 +17,11 @@ def _keypressed(event, key):
     return event.type == KEYDOWN and event.key == key
 
 
+def _load_img(name):
+    path = os.path.join(os.path.dirname(__file__), 'img', f'{name}.png')
+    return pygame.image.load(path).convert_alpha()
+
+
 class GameState(abc.ABC):
     """Base class for tracking game state.
 
@@ -71,15 +76,13 @@ class TitleCard(GameState):
     _DISPLAY_TIME_MS = 5000
 
     def __init__(self, screen):
+        self._title_card_img = _load_img('title_card')
         super().__init__(screen)
         pygame.time.set_timer(self._TIMED_QUIT, self._DISPLAY_TIME_MS)
 
     def draw(self):
-        path = os.path.join(os.path.dirname(__file__), 'img', 'title_card.png')
-        img = pygame.image.load(path)
-        img = pygame.transform.scale(img.convert_alpha(), room.RECT.size)
         self.screen.fill(_RED)
-        self.screen.blit(img, (0, 0))
+        self.screen.blit(self._title_card_img, (0, 0))
         pygame.display.update()
 
     def handle_quit(self, event):
@@ -96,6 +99,8 @@ class Game(GameState):
 
     def __init__(self, screen):
         self.view = room.View.DEFAULT
+        self._math_img = _load_img('math')
+        self._mini_math_img = _load_img('mini_math')
         super().__init__(screen)
 
     def _draw_default(self):
@@ -103,6 +108,10 @@ class Game(GameState):
         for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
             pygame.draw.line(self.screen, _BLACK, getattr(room.RECT, corner),
                              getattr(room.BACK_WALL, corner), 5)
+        self.screen.blit(self._mini_math_img, room.BACK_WALL.topleft)
+
+    def _draw_back_wall(self):
+        self.screen.blit(self._math_img, (0, 0))
 
     def _draw_front_wall(self):
         pygame.draw.rect(self.screen, _DARK_GREY, room.FRONT_DOOR, 5)
@@ -111,6 +120,8 @@ class Game(GameState):
         self.screen.fill(_GREY)
         if self.view is room.View.DEFAULT:
             self._draw_default()
+        elif self.view is room.View.BACK_WALL:
+            self._draw_back_wall()
         elif self.view is room.View.FRONT_WALL:
             self._draw_front_wall()
         else:

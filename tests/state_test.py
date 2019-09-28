@@ -131,7 +131,12 @@ class GameTest(unittest.TestCase):
         self.num_updates = 0
         self.patches = {
             mod: unittest.mock.patch(mod, autospec=True)
-            for mod in ('pygame.display', 'pygame.draw', 'pygame.font')}
+            for mod in (
+                'pygame.display',
+                'pygame.draw',
+                'pygame.font',
+                'pygame.image',
+            )}
         self.mocks = {mod: patch.start() for mod, patch in self.patches.items()}
         self.mocks['pygame.display'].update = self.mock_update
         self.game = state.Game(MockScreen())
