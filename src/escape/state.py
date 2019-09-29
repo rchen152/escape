@@ -8,9 +8,9 @@ from . import room
 
 
 _BLACK = (0, 0, 0)
+_BLUE = (75, 200, 255)
 _DARK_GREY = (190, 190, 190)
 _GREY = (200, 200, 200)
-_RED = (200, 25, 25)
 
 
 def _keypressed(event, key):
@@ -81,7 +81,7 @@ class TitleCard(GameState):
         pygame.time.set_timer(self._TIMED_QUIT, self._DISPLAY_TIME_MS)
 
     def draw(self):
-        self.screen.fill(_RED)
+        self.screen.fill(_BLUE)
         self.screen.blit(self._title_card_img, (0, 0))
         pygame.display.update()
 
