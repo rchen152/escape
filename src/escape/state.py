@@ -114,6 +114,9 @@ class Game(GameState):
     def _draw_floor(self):
         self._images.chest.draw()
 
+    def _draw_ceiling(self):
+        self._images.zodiac.draw()
+
     def draw(self):
         self.screen.fill(_GREY)
         if self.view is room.View.DEFAULT:
@@ -124,6 +127,8 @@ class Game(GameState):
             self._draw_front_wall()
         elif self.view is room.View.FLOOR:
             self._draw_floor()
+        elif self.view is room.View.CEILING:
+            self._draw_ceiling()
         else:
             font = pygame.font.Font(None, 80)
             text = self.view.name

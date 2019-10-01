@@ -80,3 +80,5 @@ class Images:
 
         self.math = img.load('math', screen)
         self.mini_math = img.load('mini_math', screen, BACK_WALL.topleft)
+
+        self.zodiac = img.load('zodiac', screen)
