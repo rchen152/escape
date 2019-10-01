@@ -2,6 +2,7 @@
 
 import enum
 import pygame
+from . import img
 
 
 RECT = pygame.Rect(0, 0, 1024, 576)
@@ -67,3 +68,13 @@ def quadrant(pos):
         return Quadrant.RIGHT
     assert not above_down_diagonal and not above_up_diagonal
     return Quadrant.BOTTOM
+
+
+class Images:
+
+    def __init__(self, screen):
+        self.mini_chest_img = img.load(
+            'mini_chest', screen, (RECT.w / 2, RECT.h * 7 / 8), (-0.5, -1))
+
+        self.math_img = img.load('math', screen)
+        self.mini_math_img = img.load('mini_math', screen, BACK_WALL.topleft)

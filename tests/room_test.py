@@ -2,6 +2,8 @@
 
 from escape import room
 import unittest
+import unittest.mock
+from . import test_utils
 
 
 class AtEdgeTest(unittest.TestCase):
@@ -36,6 +38,13 @@ class QuadrantTest(unittest.TestCase):
     def test_bottom(self):
         self.assertEqual(room.quadrant(room.RECT.midbottom),
                          room.Quadrant.BOTTOM)
+
+
+class ImagesTest(unittest.TestCase):
+
+    def test_load(self):
+        with test_utils.patch('pygame.image'):
+            room.Images(unittest.mock.MagicMock())
 
 
 if __name__ == '__main__':
