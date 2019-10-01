@@ -73,8 +73,10 @@ def quadrant(pos):
 class Images:
 
     def __init__(self, screen):
-        self.mini_chest_img = img.load(
+        self.chest = img.load(
+            'chest', screen, (RECT.w / 2, RECT.h / 6), (-0.5, 0.5))
+        self.mini_chest = img.load(
             'mini_chest', screen, (RECT.w / 2, RECT.h * 7 / 8), (-0.5, -1))
 
-        self.math_img = img.load('math', screen)
-        self.mini_math_img = img.load('mini_math', screen, BACK_WALL.topleft)
+        self.math = img.load('math', screen)
+        self.mini_math = img.load('mini_math', screen, BACK_WALL.topleft)

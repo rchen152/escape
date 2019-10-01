@@ -102,14 +102,17 @@ class Game(GameState):
         for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
             pygame.draw.line(self.screen, _BLACK, getattr(room.RECT, corner),
                              getattr(room.BACK_WALL, corner), 5)
-        self._images.mini_math_img.draw()
-        self._images.mini_chest_img.draw()
+        self._images.mini_math.draw()
+        self._images.mini_chest.draw()
 
     def _draw_back_wall(self):
-        self._images.math_img.draw()
+        self._images.math.draw()
 
     def _draw_front_wall(self):
         pygame.draw.rect(self.screen, _DARK_GREY, room.FRONT_DOOR, 5)
+
+    def _draw_floor(self):
+        self._images.chest.draw()
 
     def draw(self):
         self.screen.fill(_GREY)
@@ -119,6 +122,8 @@ class Game(GameState):
             self._draw_back_wall()
         elif self.view is room.View.FRONT_WALL:
             self._draw_front_wall()
+        elif self.view is room.View.FLOOR:
+            self._draw_floor()
         else:
             font = pygame.font.Font(None, 80)
             text = self.view.name
@@ -134,7 +139,7 @@ class Game(GameState):
             # front wall.
             self.view = room.View.FRONT_WALL
             return
-        if self._images.mini_chest_img.collidepoint(pos):
+        if self._images.mini_chest.collidepoint(pos):
             # Clicking in the intersection of the chest on the floor and the
             # back wall should take us to the floor, not the wall.
             self.view = room.View.FLOOR
