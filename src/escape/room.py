@@ -1,3 +1,5 @@
+"""Game room."""
+
 import enum
 import pygame
 

@@ -9,6 +9,8 @@ from pygame.locals import *
 import unittest
 import unittest.mock
 
+from . import test_utils
+
 
 class MockEvent:
 
@@ -118,9 +120,9 @@ class GameStateTest(unittest.TestCase):
 class TitleCardTest(unittest.TestCase):
 
     def test_init(self):
-        with unittest.mock.patch('pygame.display', autospec=True):
-            with unittest.mock.patch('pygame.image', autospec=True):
-                with unittest.mock.patch('pygame.transform', autospec=True):
+        with test_utils.patch('pygame.display', autospec=True):
+            with test_utils.patch('pygame.image', autospec=True):
+                with test_utils.patch('pygame.transform', autospec=True):
                     state.TitleCard(MockScreen())
 
 
@@ -130,7 +132,7 @@ class GameTest(unittest.TestCase):
         super().setUp()
         self.num_updates = 0
         self.patches = {
-            mod: unittest.mock.patch(mod, autospec=True)
+            mod: test_utils.patch(mod)
             for mod in (
                 'pygame.display',
                 'pygame.draw',

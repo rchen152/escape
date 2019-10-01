@@ -3,7 +3,7 @@
 import abc
 import pygame
 from pygame.locals import *
-import os
+from . import img
 from . import room
 
 
@@ -15,11 +15,6 @@ _GREY = (200, 200, 200)
 
 def _keypressed(event, key):
     return event.type == KEYDOWN and event.key == key
-
-
-def _load_img(name):
-    path = os.path.join(os.path.dirname(__file__), 'img', f'{name}.png')
-    return pygame.image.load(path).convert_alpha()
 
 
 class GameState(abc.ABC):
@@ -76,13 +71,13 @@ class TitleCard(GameState):
     _DISPLAY_TIME_MS = 5000
 
     def __init__(self, screen):
-        self._title_card_img = _load_img('title_card')
+        self._title_card_img = img.load('title_card', screen)
         super().__init__(screen)
         pygame.time.set_timer(self._TIMED_QUIT, self._DISPLAY_TIME_MS)
 
     def draw(self):
         self.screen.fill(_BLUE)
-        self.screen.blit(self._title_card_img, (0, 0))
+        self._title_card_img.draw()
         pygame.display.update()
 
     def handle_quit(self, event):
@@ -99,8 +94,12 @@ class Game(GameState):
 
     def __init__(self, screen):
         self.view = room.View.DEFAULT
-        self._math_img = _load_img('math')
-        self._mini_math_img = _load_img('mini_math')
+        self._math_img = img.load('math', screen)
+        self._mini_chest_img = img.load(
+            'mini_chest', screen, (room.RECT.w / 2, room.RECT.h * 7 / 8),
+            (-0.5, -1))
+        self._mini_math_img = img.load(
+            'mini_math', screen, room.BACK_WALL.topleft)
         super().__init__(screen)
 
     def _draw_default(self):
@@ -108,10 +107,11 @@ class Game(GameState):
         for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
             pygame.draw.line(self.screen, _BLACK, getattr(room.RECT, corner),
                              getattr(room.BACK_WALL, corner), 5)
-        self.screen.blit(self._mini_math_img, room.BACK_WALL.topleft)
+        self._mini_math_img.draw()
+        self._mini_chest_img.draw()
 
     def _draw_back_wall(self):
-        self.screen.blit(self._math_img, (0, 0))
+        self._math_img.draw()
 
     def _draw_front_wall(self):
         pygame.draw.rect(self.screen, _DARK_GREY, room.FRONT_DOOR, 5)
@@ -138,6 +138,11 @@ class Game(GameState):
             # In the default view, the edges of the screen border the (hidden)
             # front wall.
             self.view = room.View.FRONT_WALL
+            return
+        if self._mini_chest_img.collidepoint(pos):
+            # Clicking in the intersection of the chest on the floor and the
+            # back wall should take us to the floor, not the wall.
+            self.view = room.View.FLOOR
             return
         if room.BACK_WALL.collidepoint(pos):
             # The back wall is a rectangle, so use built-in collision detection.
