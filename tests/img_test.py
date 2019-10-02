@@ -6,17 +6,7 @@ import unittest.mock
 from . import test_utils
 
 
-class LoadTest(unittest.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.patch = test_utils.patch('pygame.image')
-        self.patch.start()
-        self.screen = unittest.mock.MagicMock()
-
-    def tearDown(self):
-        super().tearDown()
-        self.patch.stop()
+class LoadTest(test_utils.ImgTestCase):
 
     def test_load(self):
         img.load('title_card', self.screen)
@@ -38,6 +28,18 @@ class LoadTest(unittest.TestCase):
     def test_shift(self):
         image = img.load('title_card', self.screen, shift=(1, 1))
         self.assertFalse(image.collidepoint((0, 0)))
+
+
+class FactoryTest(test_utils.ImgTestCase):
+
+    def test_factory(self):
+
+        class MockImage(img.Factory):
+            def __init__(self, screen):
+                super().__init__('title_card', screen)
+
+        image = img.load(self.screen, factory=MockImage)
+        self.assertIsInstance(image, MockImage)
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import os
 import pygame
 
 
-class _Image:
+class Factory:
 
     def __init__(self, name, screen, position=(0, 0), shift=(0, 0)):
         """Initializer for a png image.
@@ -30,5 +30,5 @@ class _Image:
         return pygame.Rect(self._pos, self._img.get_size()).collidepoint(pos)
 
 
-def load(*args, **kwargs):
-    return _Image(*args, **kwargs)
+def load(*args, factory=Factory, **kwargs):
+    return factory(*args, **kwargs)

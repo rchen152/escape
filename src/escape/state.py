@@ -3,14 +3,9 @@
 import abc
 import pygame
 from pygame.locals import *
+from . import color
 from . import img
 from . import room
-
-
-_BLACK = (0, 0, 0)
-_BLUE = (75, 200, 255)
-_DARK_GREY = (190, 190, 190)
-_GREY = (200, 200, 200)
 
 
 def _keypressed(event, key):
@@ -76,7 +71,7 @@ class TitleCard(GameState):
         pygame.time.set_timer(self._TIMED_QUIT, self._DISPLAY_TIME_MS)
 
     def draw(self):
-        self.screen.fill(_BLUE)
+        self.screen.fill(color.BLUE)
         self._title_card_img.draw()
         pygame.display.update()
 
@@ -98,10 +93,11 @@ class Game(GameState):
         super().__init__(screen)
 
     def _draw_default(self):
-        pygame.draw.rect(self.screen, _BLACK, room.BACK_WALL, 5)
+        pygame.draw.rect(self.screen, color.BLACK, room.BACK_WALL, 5)
         for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
-            pygame.draw.line(self.screen, _BLACK, getattr(room.RECT, corner),
-                             getattr(room.BACK_WALL, corner), 5)
+            pygame.draw.line(
+                self.screen, color.BLACK, getattr(room.RECT, corner),
+                getattr(room.BACK_WALL, corner), 5)
         self._images.mini_window.draw()
         self._images.mini_math.draw()
         self._images.mini_chest.draw()
@@ -110,7 +106,7 @@ class Game(GameState):
         self._images.math.draw()
 
     def _draw_front_wall(self):
-        pygame.draw.rect(self.screen, _DARK_GREY, room.FRONT_DOOR, 5)
+        pygame.draw.rect(self.screen, color.DARK_GREY, room.FRONT_DOOR, 5)
 
     def _draw_floor(self):
         self._images.chest.draw()
@@ -125,7 +121,7 @@ class Game(GameState):
         self._images.maxi_window.draw()
 
     def draw(self):
-        self.screen.fill(_GREY)
+        self.screen.fill(color.GREY)
         view = self.view.name.lower()
         draw_view = getattr(self, f'_draw_{view}', None)
         if draw_view:
@@ -134,7 +130,7 @@ class Game(GameState):
             font = pygame.font.Font(None, 80)
             text = self.view.name
             size = font.size(text)
-            ren = font.render(text, 0, _BLACK, _GREY)
+            ren = font.render(text, 0, color.BLACK, color.GREY)
             self.screen.blit(
                 ren, ((room.RECT.w - size[0]) / 2, (room.RECT.h - size[1]) / 2))
         pygame.display.update()
@@ -192,4 +188,15 @@ class Game(GameState):
         if self.view is not room.View.DEFAULT:
             self.view = room.View.DEFAULT
             self.draw()
+        return True
+
+    def handle_chest_combo(self, event):
+        if self.view is not room.View.FLOOR:
+            return False
+        response = self._images.chest.send(event)
+        if response is None:
+            return False
+        if response:
+            self._images.chest.draw()
+            pygame.display.update()
         return True

@@ -46,3 +46,24 @@ def patch(module, *args, **kwargs):
     if module == 'pygame.image':
         return PygameImagePatch(*args, **kwargs)
     return unittest.mock.patch(module, *args, **kwargs)
+
+
+class MockEvent:
+
+    def __init__(self, typ, **kwargs):
+        self.type = typ
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+
+class ImgTestCase(unittest.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.patch = patch('pygame.image')
+        self.patch.start()
+        self.screen = unittest.mock.MagicMock()
+
+    def tearDown(self):
+        super().tearDown()
+        self.patch.stop()

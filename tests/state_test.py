@@ -12,16 +12,8 @@ import unittest.mock
 from . import test_utils
 
 
-class MockEvent:
-
-    def __init__(self, typ, **kwargs):
-        self.type = typ
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-
 def _click(x, y):
-    return MockEvent(MOUSEBUTTONDOWN, button=1, pos=(x, y))
+    return test_utils.MockEvent(MOUSEBUTTONDOWN, button=1, pos=(x, y))
 
 
 class MockGame(state.GameState):
@@ -69,19 +61,20 @@ class GameStateTest(unittest.TestCase):
 
     def test_quit_x(self):
         self.assertTrue(self.state.active)
-        self.state.handle_quit(MockEvent(QUIT))
+        self.state.handle_quit(test_utils.MockEvent(QUIT))
         self.assertFalse(self.state.active)
 
     def test_quit_q(self):
         self.assertTrue(self.state.active)
-        self.state.handle_quit(MockEvent(KEYDOWN, key=K_ESCAPE))
+        self.state.handle_quit(test_utils.MockEvent(KEYDOWN, key=K_ESCAPE))
         self.assertFalse(self.state.active)
 
     def test_fullscreen(self):
         self.state.screen.fullscreen = False
         with unittest.mock.patch.object(
                 pygame.display, 'set_mode', self.mock_set_mode):
-            self.state.handle_fullscreen(MockEvent(KEYDOWN, key=K_F11))
+            self.state.handle_fullscreen(
+                test_utils.MockEvent(KEYDOWN, key=K_F11))
         self.assertTrue(self.state.screen.fullscreen)
         self.assertEqual(self.state.drawn, 2)
 
@@ -89,7 +82,8 @@ class GameStateTest(unittest.TestCase):
         self.state.screen.fullscreen = True
         with unittest.mock.patch.object(
                 pygame.display, 'set_mode', self.mock_set_mode):
-            self.state.handle_fullscreen(MockEvent(KEYDOWN, key=K_F11))
+            self.state.handle_fullscreen(
+                test_utils.MockEvent(KEYDOWN, key=K_F11))
         self.assertFalse(self.state.screen.fullscreen)
         self.assertEqual(self.state.drawn, 2)
 
@@ -99,10 +93,10 @@ class GameStateTest(unittest.TestCase):
                 pygame.display, 'set_mode', self.mock_set_mode):
             with unittest.mock.patch.object(pygame.event, 'get') as mock_get:
                 mock_get.return_value = [
-                    MockEvent(KEYDOWN, key=K_F11),
-                    MockEvent(KEYDOWN, key=K_F11),
-                    MockEvent(KEYDOWN, key=K_F11),
-                    MockEvent(KEYDOWN, key=K_ESCAPE),
+                    test_utils.MockEvent(KEYDOWN, key=K_F11),
+                    test_utils.MockEvent(KEYDOWN, key=K_F11),
+                    test_utils.MockEvent(KEYDOWN, key=K_F11),
+                    test_utils.MockEvent(KEYDOWN, key=K_ESCAPE),
                 ]
                 self.state.run()
         self.assertTrue(self.state.screen.fullscreen)
@@ -112,21 +106,20 @@ class GameStateTest(unittest.TestCase):
     def test_cleanup(self):
         self.assertFalse(self.state.clean)
         with unittest.mock.patch.object(pygame.event, 'get') as mock_get:
-            mock_get.return_value = [MockEvent(QUIT)]
+            mock_get.return_value = [test_utils.MockEvent(QUIT)]
             self.state.run()
         self.assertTrue(self.state.clean)
 
 
-class TitleCardTest(unittest.TestCase):
+class TitleCardTest(test_utils.ImgTestCase):
 
     def test_init(self):
         with test_utils.patch('pygame.display', autospec=True):
-            with test_utils.patch('pygame.image', autospec=True):
-                with test_utils.patch('pygame.transform', autospec=True):
-                    state.TitleCard(MockScreen())
+            with test_utils.patch('pygame.transform', autospec=True):
+                state.TitleCard(MockScreen())
 
 
-class GameTest(unittest.TestCase):
+class GameTest(test_utils.ImgTestCase):
 
     def setUp(self):
         super().setUp()
@@ -137,7 +130,6 @@ class GameTest(unittest.TestCase):
                 'pygame.display',
                 'pygame.draw',
                 'pygame.font',
-                'pygame.image',
             )}
         self.mocks = {mod: patch.start() for mod, patch in self.patches.items()}
         self.mocks['pygame.display'].update = self.mock_update
@@ -188,12 +180,13 @@ class GameTest(unittest.TestCase):
     def test_reset_view(self):
         self.game.handle_click(_click(room.RECT.w / 8, room.RECT.h / 2))
         self.assertEqual(self.game.view, room.View.LEFT_WALL)
-        self.game.handle_reset(MockEvent(KEYDOWN, key=K_F5))
+        self.game.handle_reset(test_utils.MockEvent(KEYDOWN, key=K_F5))
         self.assertEqual(self.game.view, room.View.DEFAULT)
         self.assertEqual(self.num_updates, 3)
 
     def test_skip_update(self):
-        consumed = self.game.handle_reset(MockEvent(KEYDOWN, key=K_F5))
+        consumed = self.game.handle_reset(
+            test_utils.MockEvent(KEYDOWN, key=K_F5))
         assert consumed  # make sure we actually reset the view
         self.assertEqual(self.game.view, room.View.DEFAULT)
         # We were already on the default view, so no need to redraw it.

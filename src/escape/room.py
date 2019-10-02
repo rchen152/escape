@@ -2,6 +2,9 @@
 
 import enum
 import pygame
+from pygame.locals import *
+import string
+from . import color
 from . import img
 
 
@@ -72,11 +75,53 @@ def quadrant(pos):
     return Quadrant.BOTTOM
 
 
+class ChestImage(img.Factory):
+
+    _CHARPOS = [(496, 278), (509, 278), (521, 278)]
+
+    def __init__(self, screen):
+        super().__init__('chest', screen, (RECT.w / 2, RECT.h / 6), (-0.5, 0.5))
+        self._font = pygame.font.SysFont('couriernew', 15, bold=True)
+        self._text = ''
+
+    def send(self, event):
+        """Sends an event that may be consumed as an unlocking input.
+
+        event: An event.
+
+        Returns:
+          None if the event should not be consumed by the chest.
+          False if the event is consumed but the chest should not be redrawn.
+          True if the event is consumed and the chest should be redrawn.
+        """
+        if event.type != KEYDOWN:
+            return None
+        if event.key == K_BACKSPACE:
+            # Backspace is consumed as deletion of the rightmost character;
+            # whether it requires a redraw depends on whether there exists a
+            # character to delete.
+            redraw = bool(self._text)
+            self._text = self._text[:-1]
+            return redraw
+        if not event.unicode or event.unicode not in string.printable:
+            # Aside from backspace, only printable characters are consumed.
+            return None
+        if len(self._text) >= 3:
+            # We can't input more characters than there are dials on the lock.
+            return False
+        self._text += event.unicode
+        return True
+
+    def draw(self):
+        super().draw()
+        for c, pos in zip(self._text, self._CHARPOS):
+            self._screen.blit(self._font.render(c, 0, color.BLACK), pos)
+
+
 class Images:
 
     def __init__(self, screen):
-        self.chest = img.load(
-            'chest', screen, (RECT.w / 2, RECT.h / 6), (-0.5, 0.5))
+        self.chest = img.load(screen, factory=ChestImage)
         self.mini_chest = img.load(
             'mini_chest', screen, (RECT.w / 2, RECT.h * 7 / 8), (-0.5, -1))
 
