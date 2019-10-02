@@ -126,20 +126,10 @@ class Game(GameState):
 
     def draw(self):
         self.screen.fill(_GREY)
-        if self.view is room.View.DEFAULT:
-            self._draw_default()
-        elif self.view is room.View.BACK_WALL:
-            self._draw_back_wall()
-        elif self.view is room.View.FRONT_WALL:
-            self._draw_front_wall()
-        elif self.view is room.View.FLOOR:
-            self._draw_floor()
-        elif self.view is room.View.CEILING:
-            self._draw_ceiling()
-        elif self.view is room.View.LEFT_WALL:
-            self._draw_left_wall()
-        elif self.view is room.View.LEFT_WINDOW:
-            self._draw_left_window()
+        view = self.view.name.lower()
+        draw_view = getattr(self, f'_draw_{view}', None)
+        if draw_view:
+            draw_view()
         else:
             font = pygame.font.Font(None, 80)
             text = self.view.name
@@ -186,10 +176,10 @@ class Game(GameState):
     def handle_click(self, event):
         if event.type != MOUSEBUTTONUP or event.button != 1:
             return False
-        if self.view is room.View.DEFAULT:
-            consumed = self._handle_default_click(event.pos)
-        elif self.view is room.View.LEFT_WALL:
-            consumed = self._handle_left_wall_click(event.pos)
+        view = self.view.name.lower()
+        handle_view_click = getattr(self, f'_handle_{view}_click', None)
+        if handle_view_click:
+            consumed = handle_view_click(event.pos)
         else:
             consumed = self._handle_generic_click(event.pos)
         if consumed:
