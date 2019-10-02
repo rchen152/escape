@@ -199,4 +199,5 @@ class Game(GameState):
         if response:
             self._images.chest.draw()
             pygame.display.update()
+            self._images.mini_chest.text = self._images.chest.text
         return True

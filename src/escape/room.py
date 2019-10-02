@@ -4,6 +4,7 @@ import enum
 import pygame
 from pygame.locals import *
 import string
+from typing import List, Tuple
 from . import color
 from . import img
 
@@ -75,14 +76,30 @@ def quadrant(pos):
     return Quadrant.BOTTOM
 
 
-class ChestImage(img.Factory):
+class _ChestImageBase(img.Factory):
+
+    _CHARPOS: List[Tuple[int, int]] = None
+    _FONT_SIZE: int = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._font = pygame.font.SysFont(
+            'couriernew', self._FONT_SIZE, bold=True)
+        self.text = ''
+
+    def draw(self):
+        super().draw()
+        for c, pos in zip(self.text, self._CHARPOS):
+            self._screen.blit(self._font.render(c, 0, color.BLACK), pos)
+
+
+class ChestImage(_ChestImageBase):
 
     _CHARPOS = [(496, 278), (509, 278), (521, 278)]
+    _FONT_SIZE = 15
 
     def __init__(self, screen):
         super().__init__('chest', screen, (RECT.w / 2, RECT.h / 6), (-0.5, 0.5))
-        self._font = pygame.font.SysFont('couriernew', 15, bold=True)
-        self._text = ''
 
     def send(self, event):
         """Sends an event that may be consumed as an unlocking input.
@@ -100,30 +117,34 @@ class ChestImage(img.Factory):
             # Backspace is consumed as deletion of the rightmost character;
             # whether it requires a redraw depends on whether there exists a
             # character to delete.
-            redraw = bool(self._text)
-            self._text = self._text[:-1]
+            redraw = bool(self.text)
+            self.text = self.text[:-1]
             return redraw
         if not event.unicode or event.unicode not in string.printable:
             # Aside from backspace, only printable characters are consumed.
             return None
-        if len(self._text) >= 3:
+        if len(self.text) >= 3:
             # We can't input more characters than there are dials on the lock.
             return False
-        self._text += event.unicode
+        self.text += event.unicode
         return True
 
-    def draw(self):
-        super().draw()
-        for c, pos in zip(self._text, self._CHARPOS):
-            self._screen.blit(self._font.render(c, 0, color.BLACK), pos)
+
+class MiniChestImage(_ChestImageBase):
+
+    _CHARPOS = [(501, 430), (510, 430), (519, 430)]
+    _FONT_SIZE = 10
+
+    def __init__(self, screen):
+        super().__init__(
+            'mini_chest', screen, (RECT.w / 2, RECT.h * 7 / 8), (-0.5, -1))
 
 
 class Images:
 
     def __init__(self, screen):
         self.chest = img.load(screen, factory=ChestImage)
-        self.mini_chest = img.load(
-            'mini_chest', screen, (RECT.w / 2, RECT.h * 7 / 8), (-0.5, -1))
+        self.mini_chest = img.load(screen, factory=MiniChestImage)
 
         self.math = img.load('math', screen)
         self.mini_math = img.load('mini_math', screen, BACK_WALL.topleft)

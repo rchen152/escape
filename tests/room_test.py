@@ -57,25 +57,30 @@ class ChestImageTest(test_utils.ImgTestCase):
 
     def test_send_unrelated(self):
         self.assertIsNone(self.chest.send(test_utils.MockEvent(QUIT)))
+        self.assertFalse(self.chest.text)
 
     def test_send_backspace_noop(self):
         redraw = self.chest.send(test_utils.MockEvent(KEYDOWN, key=K_BACKSPACE))
         self.assertIs(redraw, False)
+        self.assertFalse(self.chest.text)
 
     def test_send_backspace(self):
         self.chest.send(test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r'))
         redraw = self.chest.send(test_utils.MockEvent(KEYDOWN, key=K_BACKSPACE))
         self.assertIs(redraw, True)
+        self.assertFalse(self.chest.text)
 
     def test_send_nonprintable(self):
         self.assertIsNone(
             self.chest.send(
                 test_utils.MockEvent(KEYDOWN, key=K_ESCAPE, unicode='\x1b')))
+        self.assertFalse(self.chest.text)
 
     def test_send_empty(self):
         self.assertIsNone(
             self.chest.send(
                 test_utils.MockEvent(KEYDOWN, key=K_F1, unicode='')))
+        self.assertFalse(self.chest.text)
 
     def test_send_overflow(self):
         self.chest.send(test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r'))
@@ -84,11 +89,13 @@ class ChestImageTest(test_utils.ImgTestCase):
         self.assertIs(
             self.chest.send(
                 test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r')), False)
+        self.assertEqual(self.chest.text, 'rrr')
 
     def test_send_printable(self):
         self.assertIs(
             self.chest.send(
                 test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r')), True)
+        self.assertEqual(self.chest.text, 'r')
 
 
 if __name__ == '__main__':
