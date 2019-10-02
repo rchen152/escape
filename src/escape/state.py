@@ -40,13 +40,13 @@ class GameState(abc.ABC):
         pass
 
     def handle_quit(self, event):
-        if event.type == QUIT or _keypressed(event, K_q):
+        if event.type == QUIT or _keypressed(event, K_ESCAPE):
             self.active = False
             return True
         return False
 
     def handle_fullscreen(self, event):
-        if not _keypressed(event, K_f):
+        if not _keypressed(event, K_F11):
             return False
         if self.screen.get_flags() & FULLSCREEN:
             pygame.display.set_mode(room.RECT.size)
@@ -187,7 +187,7 @@ class Game(GameState):
         return consumed
 
     def handle_reset(self, event):
-        if not _keypressed(event, K_r):
+        if not _keypressed(event, K_F5):
             return False
         if self.view is not room.View.DEFAULT:
             self.view = room.View.DEFAULT

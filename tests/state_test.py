@@ -74,14 +74,14 @@ class GameStateTest(unittest.TestCase):
 
     def test_quit_q(self):
         self.assertTrue(self.state.active)
-        self.state.handle_quit(MockEvent(KEYDOWN, key=K_q))
+        self.state.handle_quit(MockEvent(KEYDOWN, key=K_ESCAPE))
         self.assertFalse(self.state.active)
 
     def test_fullscreen(self):
         self.state.screen.fullscreen = False
         with unittest.mock.patch.object(
                 pygame.display, 'set_mode', self.mock_set_mode):
-            self.state.handle_fullscreen(MockEvent(KEYDOWN, key=K_f))
+            self.state.handle_fullscreen(MockEvent(KEYDOWN, key=K_F11))
         self.assertTrue(self.state.screen.fullscreen)
         self.assertEqual(self.state.drawn, 2)
 
@@ -89,7 +89,7 @@ class GameStateTest(unittest.TestCase):
         self.state.screen.fullscreen = True
         with unittest.mock.patch.object(
                 pygame.display, 'set_mode', self.mock_set_mode):
-            self.state.handle_fullscreen(MockEvent(KEYDOWN, key=K_f))
+            self.state.handle_fullscreen(MockEvent(KEYDOWN, key=K_F11))
         self.assertFalse(self.state.screen.fullscreen)
         self.assertEqual(self.state.drawn, 2)
 
@@ -99,10 +99,10 @@ class GameStateTest(unittest.TestCase):
                 pygame.display, 'set_mode', self.mock_set_mode):
             with unittest.mock.patch.object(pygame.event, 'get') as mock_get:
                 mock_get.return_value = [
-                    MockEvent(KEYDOWN, key=K_f),
-                    MockEvent(KEYDOWN, key=K_f),
-                    MockEvent(KEYDOWN, key=K_f),
-                    MockEvent(KEYDOWN, key=K_q),
+                    MockEvent(KEYDOWN, key=K_F11),
+                    MockEvent(KEYDOWN, key=K_F11),
+                    MockEvent(KEYDOWN, key=K_F11),
+                    MockEvent(KEYDOWN, key=K_ESCAPE),
                 ]
                 self.state.run()
         self.assertTrue(self.state.screen.fullscreen)
@@ -188,12 +188,12 @@ class GameTest(unittest.TestCase):
     def test_reset_view(self):
         self.game.handle_click(_click(room.RECT.w / 8, room.RECT.h / 2))
         self.assertEqual(self.game.view, room.View.LEFT_WALL)
-        self.game.handle_reset(MockEvent(KEYDOWN, key=K_r))
+        self.game.handle_reset(MockEvent(KEYDOWN, key=K_F5))
         self.assertEqual(self.game.view, room.View.DEFAULT)
         self.assertEqual(self.num_updates, 3)
 
     def test_skip_update(self):
-        consumed = self.game.handle_reset(MockEvent(KEYDOWN, key=K_r))
+        consumed = self.game.handle_reset(MockEvent(KEYDOWN, key=K_F5))
         assert consumed  # make sure we actually reset the view
         self.assertEqual(self.game.view, room.View.DEFAULT)
         # We were already on the default view, so no need to redraw it.
