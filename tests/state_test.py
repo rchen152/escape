@@ -21,7 +21,7 @@ class MockEvent:
 
 
 def _click(x, y):
-    return MockEvent(MOUSEBUTTONUP, button=1, pos=(x, y))
+    return MockEvent(MOUSEBUTTONDOWN, button=1, pos=(x, y))
 
 
 class MockGame(state.GameState):

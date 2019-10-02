@@ -174,7 +174,7 @@ class Game(GameState):
         return self._handle_generic_click(pos)
 
     def handle_click(self, event):
-        if event.type != MOUSEBUTTONUP or event.button != 1:
+        if event.type != MOUSEBUTTONDOWN or event.button != 1:
             return False
         view = self.view.name.lower()
         handle_view_click = getattr(self, f'_handle_{view}_click', None)
