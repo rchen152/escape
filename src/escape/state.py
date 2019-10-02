@@ -102,6 +102,7 @@ class Game(GameState):
         for corner in ('topleft', 'bottomleft', 'bottomright', 'topright'):
             pygame.draw.line(self.screen, _BLACK, getattr(room.RECT, corner),
                              getattr(room.BACK_WALL, corner), 5)
+        self._images.mini_window.draw()
         self._images.mini_math.draw()
         self._images.mini_chest.draw()
 
@@ -117,6 +118,12 @@ class Game(GameState):
     def _draw_ceiling(self):
         self._images.zodiac.draw()
 
+    def _draw_left_wall(self):
+        self._images.window.draw()
+
+    def _draw_left_window(self):
+        self._images.maxi_window.draw()
+
     def draw(self):
         self.screen.fill(_GREY)
         if self.view is room.View.DEFAULT:
@@ -129,6 +136,10 @@ class Game(GameState):
             self._draw_floor()
         elif self.view is room.View.CEILING:
             self._draw_ceiling()
+        elif self.view is room.View.LEFT_WALL:
+            self._draw_left_wall()
+        elif self.view is room.View.LEFT_WINDOW:
+            self._draw_left_window()
         else:
             font = pygame.font.Font(None, 80)
             text = self.view.name
@@ -143,33 +154,47 @@ class Game(GameState):
             # In the default view, the edges of the screen border the (hidden)
             # front wall.
             self.view = room.View.FRONT_WALL
-            return
+            return True
         if self._images.mini_chest.collidepoint(pos):
             # Clicking in the intersection of the chest on the floor and the
             # back wall should take us to the floor, not the wall.
             self.view = room.View.FLOOR
-            return
+            return True
         if room.BACK_WALL.collidepoint(pos):
             # The back wall is a rectangle, so use built-in collision detection.
             self.view = room.View.BACK_WALL
-            return
+            return True
         # Since we've already checked the front and back walls, the quadrant
         # corresponds to one of the other four walls.
         self.view = room.View(room.quadrant(pos).value)
+        return True
+
+    def _handle_generic_click(self, pos):
+        if not room.at_edge(pos):
+            return False
+        quadrant = room.quadrant(pos)
+        self.view = room.View(
+            room.ROTATIONS[self.view].get(quadrant, quadrant.value))
+        return True
+
+    def _handle_left_wall_click(self, pos):
+        if self._images.window.collidepoint(pos):
+            self.view = room.View.LEFT_WINDOW
+            return True
+        return self._handle_generic_click(pos)
 
     def handle_click(self, event):
         if event.type != MOUSEBUTTONUP or event.button != 1:
             return False
         if self.view is room.View.DEFAULT:
-            self._handle_default_click(event.pos)
-        elif not room.at_edge(event.pos):
-            return False
+            consumed = self._handle_default_click(event.pos)
+        elif self.view is room.View.LEFT_WALL:
+            consumed = self._handle_left_wall_click(event.pos)
         else:
-            quadrant = room.quadrant(event.pos)
-            self.view = room.View(
-                room.ROTATIONS[self.view].get(quadrant, quadrant.value))
-        self.draw()
-        return True
+            consumed = self._handle_generic_click(event.pos)
+        if consumed:
+            self.draw()
+        return consumed
 
     def handle_reset(self, event):
         if not _keypressed(event, K_r):

@@ -204,6 +204,16 @@ class GameTest(unittest.TestCase):
         self.assertEqual(self.game.view, room.View.LEFT_WALL)
         self.game.handle_click(_click(0, room.RECT.h / 2))
         self.assertEqual(self.game.view, room.View.FRONT_WALL)
+        self.assertEqual(self.num_updates, 3)
+
+    def test_left_window_view(self):
+        self.game.handle_click(_click(room.RECT.w / 8, room.RECT.h / 2))
+        self.assertEqual(self.game.view, room.View.LEFT_WALL)
+        self.game.handle_click(_click(room.RECT.w / 2, room.RECT.h / 3))
+        self.assertEqual(self.game.view, room.View.LEFT_WINDOW)
+        self.game.handle_click(_click(0, 0))
+        self.assertEqual(self.game.view, room.View.LEFT_WALL)
+        self.assertEqual(self.num_updates, 4)
 
 
 if __name__ == '__main__':

@@ -18,6 +18,7 @@ class View(enum.Enum):
     FRONT_WALL = 4
     BACK_WALL = 5
     DEFAULT = 6
+    LEFT_WINDOW = 7
 
 
 class Quadrant(enum.Enum):
@@ -37,6 +38,7 @@ ROTATIONS = {View.LEFT_WALL: {Quadrant.LEFT: View.FRONT_WALL.value,
                           Quadrant.BOTTOM: View.FRONT_WALL.value}}
 ROTATIONS[View.FRONT_WALL] = {quad: (2 - quad.value) % 4 for quad in Quadrant}
 ROTATIONS[View.BACK_WALL] = ROTATIONS[View.DEFAULT] = {}
+ROTATIONS[View.LEFT_WINDOW] = {quad: View.LEFT_WALL for quad in Quadrant}
 
 
 def at_edge(pos):
@@ -80,5 +82,11 @@ class Images:
 
         self.math = img.load('math', screen)
         self.mini_math = img.load('mini_math', screen, BACK_WALL.topleft)
+
+        self.window = img.load(
+            'window', screen, (RECT.w / 4, RECT.h / 2), (0, -1))
+        self.mini_window = img.load(
+            'mini_window', screen, (RECT.w / 16, RECT.h / 2), (0, -1))
+        self.maxi_window = img.load('maxi_window', screen, (0, RECT.h / 4))
 
         self.zodiac = img.load('zodiac', screen)
