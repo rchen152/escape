@@ -30,11 +30,11 @@ class LoadTest(test_utils.ImgTestCase):
         self.assertFalse(image.collidepoint((0, 0)))
 
 
-class FactoryTest(test_utils.ImgTestCase):
+class PngFactoryTest(test_utils.ImgTestCase):
 
     def test_factory(self):
 
-        class MockImage(img.Factory):
+        class MockImage(img.PngFactory):
             def __init__(self, screen):
                 super().__init__('title_card', screen)
 

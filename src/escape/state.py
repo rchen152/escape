@@ -106,7 +106,7 @@ class Game(GameState):
         self._images.math.draw()
 
     def _draw_front_wall(self):
-        pygame.draw.rect(self.screen, color.DARK_GREY, room.FRONT_DOOR, 5)
+        self._images.front_door.draw()
 
     def _draw_floor(self):
         self._images.chest.draw()
@@ -121,6 +121,11 @@ class Game(GameState):
         self._images.maxi_window.draw()
 
     def draw(self):
+        """Draw the current view.
+
+        First fills in the wall color, then calls _draw_<lowercase view name>
+        if it exists. (Temporary) Otherwise, prints the view name on the wall.
+        """
         self.screen.fill(color.GREY)
         view = self.view.name.lower()
         draw_view = getattr(self, f'_draw_{view}', None)
@@ -140,19 +145,17 @@ class Game(GameState):
             # In the default view, the edges of the screen border the (hidden)
             # front wall.
             self.view = room.View.FRONT_WALL
-            return True
-        if self._images.mini_chest.collidepoint(pos):
+        elif self._images.mini_chest.collidepoint(pos):
             # Clicking in the intersection of the chest on the floor and the
             # back wall should take us to the floor, not the wall.
             self.view = room.View.FLOOR
-            return True
-        if room.BACK_WALL.collidepoint(pos):
+        elif room.BACK_WALL.collidepoint(pos):
             # The back wall is a rectangle, so use built-in collision detection.
             self.view = room.View.BACK_WALL
-            return True
-        # Since we've already checked the front and back walls, the quadrant
-        # corresponds to one of the other four walls.
-        self.view = room.View(room.quadrant(pos).value)
+        else:
+            # Since we've already checked the front and back walls, the quadrant
+            # corresponds to one of the other four walls.
+            self.view = room.View(room.quadrant(pos).value)
         return True
 
     def _handle_generic_click(self, pos):
@@ -164,12 +167,27 @@ class Game(GameState):
         return True
 
     def _handle_left_wall_click(self, pos):
-        if self._images.window.collidepoint(pos):
-            self.view = room.View.LEFT_WINDOW
-            return True
-        return self._handle_generic_click(pos)
+        if not self._images.window.collidepoint(pos):
+            return False
+        self.view = room.View.LEFT_WINDOW
+        return True
+
+    def _handle_front_wall_click(self, pos):
+        if not self._images.front_door.collidepoint(pos):
+            return False
+        self._images.front_door.opened = True
+        return True
 
     def handle_click(self, event):
+        """Handle left mouse clicks.
+
+        If the event is a left click, tries to call
+        _handle_{lowercase view name}. If it does not exist or returns False,
+        falls back to _handle_generic_click.
+
+        Args:
+          event: An event.
+        """
         if event.type != MOUSEBUTTONDOWN or event.button != 1:
             return False
         view = self.view.name.lower()
@@ -177,6 +195,8 @@ class Game(GameState):
         if handle_view_click:
             consumed = handle_view_click(event.pos)
         else:
+            consumed = False
+        if not consumed:
             consumed = self._handle_generic_click(event.pos)
         if consumed:
             self.draw()

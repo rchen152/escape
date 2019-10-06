@@ -11,7 +11,6 @@ from . import img
 
 RECT = pygame.Rect(0, 0, 1024, 576)
 BACK_WALL = pygame.Rect(RECT.w / 4, RECT.h / 4, RECT.w / 2, RECT.h / 2)
-FRONT_DOOR = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
 
 
 class View(enum.Enum):
@@ -76,7 +75,7 @@ def quadrant(pos):
     return Quadrant.BOTTOM
 
 
-class _ChestImageBase(img.Factory):
+class _ChestBase(img.PngFactory):
 
     _CHARPOS: List[Tuple[int, int]] = None
     _FONT_SIZE: int = None
@@ -93,7 +92,7 @@ class _ChestImageBase(img.Factory):
             self._screen.blit(self._font.render(c, 0, color.BLACK), pos)
 
 
-class ChestImage(_ChestImageBase):
+class Chest(_ChestBase):
 
     _CHARPOS = [(496, 278), (509, 278), (521, 278)]
     _FONT_SIZE = 15
@@ -130,7 +129,7 @@ class ChestImage(_ChestImageBase):
         return True
 
 
-class MiniChestImage(_ChestImageBase):
+class MiniChest(_ChestBase):
 
     _CHARPOS = [(501, 430), (510, 430), (519, 430)]
     _FONT_SIZE = 10
@@ -140,11 +139,36 @@ class MiniChestImage(_ChestImageBase):
             'mini_chest', screen, (RECT.w / 2, RECT.h * 7 / 8), (-0.5, -1))
 
 
+class FrontDoor(img.Factory):
+
+    _RECT = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
+    _GAP = pygame.Rect(_RECT.right - 5, _RECT.top - 2, 10, _RECT.h + 2)
+    _PANEL = pygame.Rect(_RECT.left + 2, _RECT.top + 2, 20, _RECT.h - 2)
+
+    def __init__(self, screen):
+        super().__init__(screen)
+        self.opened = False
+
+    def draw(self):
+        if self.opened:
+            pygame.draw.rect(self._screen, color.BLACK, self._RECT)
+            pygame.draw.rect(self._screen, color.DARK_GREY, self._RECT, 5)
+            pygame.draw.rect(self._screen, color.GREY, self._PANEL)
+        else:
+            pygame.draw.rect(self._screen, color.DARK_GREY, self._RECT, 5)
+            pygame.draw.rect(self._screen, color.DARK_GREY, self._GAP)
+
+    def collidepoint(self, pos):
+        return not self.opened and self._GAP.collidepoint(pos)
+
+
 class Images:
 
     def __init__(self, screen):
-        self.chest = img.load(screen, factory=ChestImage)
-        self.mini_chest = img.load(screen, factory=MiniChestImage)
+        self.chest = img.load(screen, factory=Chest)
+        self.mini_chest = img.load(screen, factory=MiniChest)
+
+        self.front_door = img.load(screen, factory=FrontDoor)
 
         self.math = img.load('math', screen)
         self.mini_math = img.load('mini_math', screen, BACK_WALL.topleft)

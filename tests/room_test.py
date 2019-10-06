@@ -48,12 +48,12 @@ class ImagesTest(test_utils.ImgTestCase):
             room.Images(self.screen)
 
 
-class ChestImageTest(test_utils.ImgTestCase):
+class ChestTest(test_utils.ImgTestCase):
 
     def setUp(self):
         super().setUp()
         with test_utils.patch('pygame.font'):
-            self.chest = room.ChestImage(self.screen)
+            self.chest = room.Chest(self.screen)
 
     def test_send_unrelated(self):
         self.assertIsNone(self.chest.send(test_utils.MockEvent(QUIT)))
