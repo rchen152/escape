@@ -147,19 +147,65 @@ class FrontDoor(img.Factory):
 
     def __init__(self, screen):
         super().__init__(screen)
-        self.opened = False
+        self.revealed = False
+        self.light_switch_on = True
 
     def draw(self):
-        if self.opened:
-            pygame.draw.rect(self._screen, color.BLACK, self._RECT)
-            pygame.draw.rect(self._screen, color.DARK_GREY, self._RECT, 5)
-            pygame.draw.rect(self._screen, color.GREY, self._PANEL)
+        if self.light_switch_on:
+            wall_color = color.GREY
+            gap_color = color.DARK_GREY_1
         else:
-            pygame.draw.rect(self._screen, color.DARK_GREY, self._RECT, 5)
-            pygame.draw.rect(self._screen, color.DARK_GREY, self._GAP)
+            wall_color = gap_color = color.DARK_GREY_2
+        if self.revealed:
+            pygame.draw.rect(self._screen, color.BLACK, self._RECT)
+            pygame.draw.rect(self._screen, gap_color, self._RECT, 5)
+            pygame.draw.rect(self._screen, wall_color, self._PANEL)
+        else:
+            pygame.draw.rect(self._screen, gap_color, self._RECT, 5)
+            pygame.draw.rect(self._screen, gap_color, self._GAP)
 
     def collidepoint(self, pos):
-        return not self.opened and self._GAP.collidepoint(pos)
+        return not self.revealed and self._GAP.collidepoint(pos)
+
+
+class LightSwitch(img.Factory):
+    """Temporary switch."""
+
+    _RECT = pygame.Rect(480, 216, 64, 72)
+
+    def __init__(self, screen):
+        super().__init__(screen)
+        self.on = True
+
+    @property
+    def color(self):
+        return color.YELLOW if self.on else color.BLACK
+
+    def draw(self):
+        pygame.draw.rect(self._screen, self.color, self._RECT)
+
+    def collidepoint(self, pos):
+        return self._RECT.collidepoint(pos)
+
+
+class MiniLightSwitch(img.Factory):
+    """Temporary mini switch."""
+
+    def __init__(self, screen):
+        super().__init__(screen)
+        self._rect = None
+        self.on = True
+
+    @property
+    def color(self):
+        return color.YELLOW if self.on else color.BLACK
+
+    def draw(self):
+        self._rect = pygame.draw.polygon(self._screen, self.color, [
+            (888, 235), (904, 233), (904, 288), (888, 288)])
+
+    def collidepoint(self, pos):
+        return self._rect and self._rect.collidepoint(pos)
 
 
 class Images:
@@ -169,6 +215,9 @@ class Images:
         self.mini_chest = img.load(screen, factory=MiniChest)
 
         self.front_door = img.load(screen, factory=FrontDoor)
+
+        self.light_switch = img.load(screen, factory=LightSwitch)
+        self.mini_light_switch = img.load(screen, factory=MiniLightSwitch)
 
         self.math = img.load('math', screen)
         self.mini_math = img.load('mini_math', screen, BACK_WALL.topleft)

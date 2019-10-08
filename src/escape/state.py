@@ -90,6 +90,7 @@ class Game(GameState):
     def __init__(self, screen):
         self.view = room.View.DEFAULT
         self._images = room.Images(screen)
+        self._wall_color = color.GREY
         super().__init__(screen)
 
     def _draw_default(self):
@@ -101,6 +102,7 @@ class Game(GameState):
         self._images.mini_window.draw()
         self._images.mini_math.draw()
         self._images.mini_chest.draw()
+        self._images.mini_light_switch.draw()
 
     def _draw_back_wall(self):
         self._images.math.draw()
@@ -112,7 +114,8 @@ class Game(GameState):
         self._images.chest.draw()
 
     def _draw_ceiling(self):
-        self._images.zodiac.draw()
+        if not self._images.light_switch.on:
+            self._images.zodiac.draw()
 
     def _draw_left_wall(self):
         self._images.window.draw()
@@ -120,24 +123,17 @@ class Game(GameState):
     def _draw_left_window(self):
         self._images.maxi_window.draw()
 
+    def _draw_right_wall(self):
+        self._images.light_switch.draw()
+
     def draw(self):
         """Draw the current view.
 
-        First fills in the wall color, then calls _draw_<lowercase view name>
-        if it exists. (Temporary) Otherwise, prints the view name on the wall.
+        First fills in the wall color, then calls _draw_<lowercase view name>.
         """
-        self.screen.fill(color.GREY)
+        self.screen.fill(self._wall_color)
         view = self.view.name.lower()
-        draw_view = getattr(self, f'_draw_{view}', None)
-        if draw_view:
-            draw_view()
-        else:
-            font = pygame.font.Font(None, 80)
-            text = self.view.name
-            size = font.size(text)
-            ren = font.render(text, 0, color.BLACK, color.GREY)
-            self.screen.blit(
-                ren, ((room.RECT.w - size[0]) / 2, (room.RECT.h - size[1]) / 2))
+        getattr(self, f'_draw_{view}')()
         pygame.display.update()
 
     def _handle_default_click(self, pos):
@@ -175,7 +171,22 @@ class Game(GameState):
     def _handle_front_wall_click(self, pos):
         if not self._images.front_door.collidepoint(pos):
             return False
-        self._images.front_door.opened = True
+        self._images.front_door.revealed = True
+        return True
+
+    def _toggle_light_switch(self):
+        self._images.light_switch.on = not self._images.light_switch.on
+        self._images.mini_light_switch.on = self._images.light_switch.on
+        if self._images.light_switch.on:
+            self._wall_color = color.GREY
+        else:
+            self._wall_color = color.DARK_GREY_2
+        self._images.front_door.light_switch_on = self._images.light_switch.on
+
+    def _handle_right_wall_click(self, pos):
+        if not self._images.light_switch.collidepoint(pos):
+            return False
+        self._toggle_light_switch()
         return True
 
     def handle_click(self, event):
