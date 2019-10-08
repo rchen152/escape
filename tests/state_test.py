@@ -30,22 +30,10 @@ class MockGame(state.GameState):
         self.clean = True
 
 
-class MockScreen:
-
-    def __init__(self):
-        self.fullscreen = False
-
-    def get_flags(self):
-        return FULLSCREEN if self.fullscreen else 0
-
-    def __getattr__(self, name):
-        return unittest.mock.MagicMock()
-
-
 class GameStateTest(unittest.TestCase):
 
     def setUp(self):
-        self.state = MockGame(MockScreen())
+        self.state = MockGame(test_utils.MockScreen())
 
     def mock_set_mode(self, size, fullscreen=False):
         del size  # unused
@@ -53,7 +41,9 @@ class GameStateTest(unittest.TestCase):
 
     def test_abstract(self):
         with self.assertRaises(TypeError):
-            state.GameState(MockScreen())  # pytype: disable=not-instantiable
+            # pytype: disable=not-instantiable
+            state.GameState(test_utils.MockScreen())
+            # pytype: enable=not-instantiable
 
     def test_basic(self):
         self.assertTrue(self.state.active)
@@ -116,7 +106,7 @@ class TitleCardTest(test_utils.ImgTestCase):
     def test_init(self):
         with test_utils.patch('pygame.display', autospec=True):
             with test_utils.patch('pygame.transform', autospec=True):
-                state.TitleCard(MockScreen())
+                state.TitleCard(self.screen)
 
 
 class GameTestCase(test_utils.ImgTestCase):
@@ -133,7 +123,7 @@ class GameTestCase(test_utils.ImgTestCase):
             )}
         self.mocks = {mod: patch.start() for mod, patch in self.patches.items()}
         self.mocks['pygame.display'].update = self.mock_update
-        self.game = state.Game(MockScreen())
+        self.game = state.Game(self.screen)
 
     def tearDown(self):
         super().tearDown()
@@ -248,6 +238,32 @@ class ChestTest(GameTestCase):
         self.assertEqual(self.game._images.chest.text, 'rrr')
         self.assertEqual(num_updates_2 - num_updates_1, 3)
         self.assertEqual(self.num_updates, num_updates_2)
+
+
+class LightSwitchTest(GameTestCase):
+
+    def test_synced(self):
+        self.assertTrue(self.game._images.light_switch.on)
+        self.assertTrue(self.game._images.front_door.light_switch_on)
+        self.game.view = room.View.CEILING
+        blit_count = self.screen.blit.call_count
+        self.game.draw()
+        self.assertEqual(self.screen.blit.call_count, blit_count)
+
+    def test_zodiac(self):
+        self.game._images.light_switch.on = False
+        self.game.view = room.View.CEILING
+        blit_count = self.screen.blit.call_count
+        self.game.draw()
+        self.assertEqual(self.screen.blit.call_count, blit_count + 1)
+
+    def test_click(self):
+        self.game.view = room.View.RIGHT_WALL
+        self.game.handle_click(test_utils.MockEvent(
+            MOUSEBUTTONDOWN, button=1,
+            pos=self.game._images.light_switch._RECT.center))
+        self.assertFalse(self.game._images.light_switch.on)
+        self.assertFalse(self.game._images.front_door.light_switch_on)
 
 
 if __name__ == '__main__':

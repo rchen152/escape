@@ -1,6 +1,7 @@
 """Test utilities."""
 
 import pygame
+from pygame.locals import *
 import unittest.mock
 
 
@@ -56,13 +57,26 @@ class MockEvent:
             setattr(self, k, v)
 
 
+class MockScreen:
+
+    def __init__(self):
+        self.fullscreen = False
+        self.mock = unittest.mock.MagicMock()
+
+    def get_flags(self):
+        return FULLSCREEN if self.fullscreen else 0
+
+    def __getattr__(self, name):
+        return getattr(self.mock, name)
+
+
 class ImgTestCase(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
         self.patch = patch('pygame.image')
         self.patch.start()
-        self.screen = unittest.mock.MagicMock()
+        self.screen = MockScreen()
 
     def tearDown(self):
         super().tearDown()
