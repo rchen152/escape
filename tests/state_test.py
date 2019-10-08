@@ -119,7 +119,7 @@ class TitleCardTest(test_utils.ImgTestCase):
                 state.TitleCard(MockScreen())
 
 
-class GameTest(test_utils.ImgTestCase):
+class GameTestCase(test_utils.ImgTestCase):
 
     def setUp(self):
         super().setUp()
@@ -142,6 +142,9 @@ class GameTest(test_utils.ImgTestCase):
 
     def mock_update(self):
         self.num_updates += 1
+
+
+class GameTest(GameTestCase):
 
     def test_default_view(self):
         self.assertEqual(self.game.view, room.View.DEFAULT)
@@ -207,6 +210,44 @@ class GameTest(test_utils.ImgTestCase):
         self.game.handle_click(_click(0, 0))
         self.assertEqual(self.game.view, room.View.LEFT_WALL)
         self.assertEqual(self.num_updates, 4)
+
+
+class ChestTest(GameTestCase):
+
+    def test_bad_view(self):
+        self.game.view = room.View.DEFAULT
+        consumed = self.game.handle_chest_combo(
+            test_utils.MockEvent(KEYDOWN, key=K_r))
+        self.assertFalse(consumed)
+        self.assertFalse(self.game._images.chest.text)
+
+    def test_bad_event(self):
+        self.game.view = room.View.FLOOR
+        consumed = self.game.handle_chest_combo(test_utils.MockEvent(QUIT))
+        self.assertFalse(consumed)
+        self.assertFalse(self.game._images.chest.text)
+
+    def test_update_text(self):
+        self.game.view = room.View.FLOOR
+        consumed = self.game.handle_chest_combo(
+            test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r'))
+        self.assertTrue(consumed)
+        self.assertEqual(self.game._images.chest.text, 'r')
+        self.assertEqual(self.game._images.mini_chest.text, 'r')
+
+    def test_max_text_length(self):
+        self.game.view = room.View.FLOOR
+        num_updates_1 = self.num_updates
+        for _ in range(3):
+            self.game.handle_chest_combo(
+                test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r'))
+        num_updates_2 = self.num_updates
+        consumed = self.game.handle_chest_combo(
+            test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r'))
+        self.assertTrue(consumed)
+        self.assertEqual(self.game._images.chest.text, 'rrr')
+        self.assertEqual(num_updates_2 - num_updates_1, 3)
+        self.assertEqual(self.num_updates, num_updates_2)
 
 
 if __name__ == '__main__':
