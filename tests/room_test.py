@@ -1,9 +1,12 @@
 """Tests for escape.room."""
 
-from escape import room
+import pygame
 from pygame.locals import *
 import unittest
 import unittest.mock
+
+from escape import color
+from escape import room
 from . import test_utils
 
 
@@ -96,6 +99,53 @@ class ChestTest(test_utils.ImgTestCase):
             self.chest.send(
                 test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r')), True)
         self.assertEqual(self.chest.text, 'r')
+
+
+class FrontDoorTest(test_utils.ImgTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.front_door = room.FrontDoor(self.screen)
+        self.colors = []
+
+    def test_collidepoint(self):
+        self.front_door.revealed = False
+        self.assertTrue(
+            self.front_door.collidepoint(self.front_door._GAP.center))
+        self.assertFalse(self.front_door.collidepoint((0, 0)))
+
+    def test_no_collidepoint(self):
+        self.front_door.revealed = True
+        self.assertFalse(
+            self.front_door.collidepoint(self.front_door._GAP.center))
+
+    def mock_draw(self, screen, draw_color, rect, width=0):
+        del screen, rect, width  # unused
+        self.colors.append(draw_color)
+
+    def _draw(self, light_switch_on, revealed):
+        self.front_door.light_switch_on = light_switch_on
+        self.front_door.revealed = revealed
+        with unittest.mock.patch.object(pygame.draw, 'rect', self.mock_draw):
+            self.front_door.draw()
+
+    def test_draw_unlit_unrevealed(self):
+        self._draw(False, False)
+        self.assertEqual(self.colors, [color.DARK_GREY_2, color.DARK_GREY_2])
+
+    def test_draw_unlit_revealed(self):
+        self._draw(False, True)
+        self.assertEqual(
+            self.colors, [color.BLACK, color.DARK_GREY_2, color.DARK_GREY_2])
+
+    def test_draw_lit_unrevealed(self):
+        self._draw(True, False)
+        self.assertEqual(self.colors, [color.DARK_GREY_1, color.DARK_GREY_1])
+
+    def test_draw_lit_revealed(self):
+        self._draw(True, True)
+        self.assertEqual(
+            self.colors, [color.BLACK, color.DARK_GREY_1, color.GREY])
 
 
 if __name__ == '__main__':
