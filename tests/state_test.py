@@ -261,7 +261,7 @@ class LightSwitchTest(GameTestCase):
         self.game.view = room.View.RIGHT_WALL
         self.game.handle_click(test_utils.MockEvent(
             MOUSEBUTTONDOWN, button=1,
-            pos=self.game._images.light_switch._RECT.center))
+            pos=(room.RECT.w / 2, room.RECT.h / 2 - 1)))
         self.assertFalse(self.game._images.light_switch.on)
         self.assertFalse(self.game._images.front_door.light_switch_on)
 

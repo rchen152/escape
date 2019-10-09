@@ -168,44 +168,35 @@ class FrontDoor(img.Factory):
         return not self.revealed and self._GAP.collidepoint(pos)
 
 
-class LightSwitch(img.Factory):
-    """Temporary switch."""
+class LightSwitchBase(img.Factory):
 
-    _RECT = pygame.Rect(480, 216, 64, 72)
-
-    def __init__(self, screen):
+    def __init__(self, names, screen, position, shift):
+        assert len(names) == 2  # image names for off and on positions
         super().__init__(screen)
         self.on = True
-
-    @property
-    def color(self):
-        return color.YELLOW if self.on else color.BLACK
+        self._images = [
+            img.load(name, screen, position, shift) for name in names]
 
     def draw(self):
-        pygame.draw.rect(self._screen, self.color, self._RECT)
+        self._images[bool(self.on)].draw()
 
     def collidepoint(self, pos):
-        return self._RECT.collidepoint(pos)
+        # Assumption: both images are the same size.
+        return self._images[0].collidepoint(pos)
 
 
-class MiniLightSwitch(img.Factory):
-    """Temporary mini switch."""
+class LightSwitch(LightSwitchBase):
 
     def __init__(self, screen):
-        super().__init__(screen)
-        self._rect = None
-        self.on = True
+        super().__init__(('light_switch_off', 'light_switch_on'), screen,
+                         (RECT.w / 2, RECT.h / 2), (-0.5, -1))
 
-    @property
-    def color(self):
-        return color.YELLOW if self.on else color.BLACK
 
-    def draw(self):
-        self._rect = pygame.draw.polygon(self._screen, self.color, [
-            (888, 235), (904, 233), (904, 288), (888, 288)])
+class MiniLightSwitch(LightSwitchBase):
 
-    def collidepoint(self, pos):
-        return self._rect and self._rect.collidepoint(pos)
+    def __init__(self, screen):
+        super().__init__(('mini_light_switch_off', 'mini_light_switch_on'),
+                         screen, (RECT.w * 7 / 8, RECT.h / 2), (-0.5, -1))
 
 
 class Images:

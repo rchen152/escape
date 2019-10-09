@@ -148,5 +148,31 @@ class FrontDoorTest(test_utils.ImgTestCase):
             self.colors, [color.BLACK, color.DARK_GREY_1, color.GREY])
 
 
+class LightSwitchTest(test_utils.ImgTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.light_switch = room.LightSwitch(self.screen)
+
+    def test_on(self):
+        self.light_switch.on = True
+        self.light_switch.draw()
+        expected = self.light_switch._images[1]
+        self.screen.blit.assert_called_once_with(expected._img, expected._pos)
+
+    def test_off(self):
+        self.light_switch.on = False
+        self.light_switch.draw()
+        expected = self.light_switch._images[0]
+        self.screen.blit.assert_called_once_with(expected._img, expected._pos)
+
+    def test_collidepoint(self):
+        self.assertTrue(self.light_switch.collidepoint(
+            (room.RECT.w / 2, room.RECT.h / 2 - 1)))
+
+    def test_no_collidepoint(self):
+        self.assertFalse(self.light_switch.collidepoint((0, 0)))
+
+
 if __name__ == '__main__':
     unittest.main()
