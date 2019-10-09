@@ -22,3 +22,7 @@ fi
 rm -rf build/
 rm -rf dist/
 rm -rf src/kitty_escape.egg-info/
+
+if $test_release; then
+  printf 'pip install -U --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple kitty-escape\n'
+fi
