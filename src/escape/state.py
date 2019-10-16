@@ -99,6 +99,8 @@ class Game(GameState):
             pygame.draw.line(
                 self.screen, color.BLACK, getattr(room.RECT, corner),
                 getattr(room.BACK_WALL, corner), 5)
+        if not self._images.light_switch.on:
+            self._images.mini_zodiac.draw()
         self._images.mini_window.draw()
         self._images.mini_math.draw()
         self._images.mini_chest.draw()

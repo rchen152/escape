@@ -220,3 +220,4 @@ class Images:
         self.maxi_window = img.load('maxi_window', screen, (0, RECT.h / 4))
 
         self.zodiac = img.load('zodiac', screen)
+        self.mini_zodiac = img.load('mini_zodiac', screen)
