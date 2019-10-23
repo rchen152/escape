@@ -75,21 +75,33 @@ def quadrant(pos):
     return Quadrant.BOTTOM
 
 
-class _ChestBase(img.PngFactory):
+class _ChestBase(img.Factory):
 
     _CHARPOS: List[Tuple[int, int]] = None
     _FONT_SIZE: int = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    _KEY = 'AYP'
+
+    def __init__(self, names, screen, position, shift):
+        super().__init__(screen)
         self._font = pygame.font.SysFont(
             'couriernew', self._FONT_SIZE, bold=True)
+        self._images = [
+            img.load(name, screen, position, shift) for name in names]
         self.text = ''
 
+    @property
+    def opened(self):
+        return self.text == self._KEY
+
     def draw(self):
-        super().draw()
-        for c, pos in zip(self.text, self._CHARPOS):
-            self._screen.blit(self._font.render(c, 0, color.BLACK), pos)
+        self._images[self.opened].draw()
+        if not self.opened:
+            for c, pos in zip(self.text, self._CHARPOS):
+                self._screen.blit(self._font.render(c, 0, color.BLACK), pos)
+
+    def collidepoint(self, pos):
+        return self._images[self.opened].collidepoint(pos)
 
 
 class Chest(_ChestBase):
@@ -98,19 +110,18 @@ class Chest(_ChestBase):
     _FONT_SIZE = 15
 
     def __init__(self, screen):
-        super().__init__('chest', screen, (RECT.w / 2, RECT.h / 6), (-0.5, 0.5))
+        super().__init__(('chest', 'chest_opened'), screen,
+                         (RECT.w / 2, 2 * RECT.h / 3), (-0.5, -1))
 
     def send(self, event):
         """Sends an event that may be consumed as an unlocking input.
-
         event: An event.
-
         Returns:
           None if the event should not be consumed by the chest.
           False if the event is consumed but the chest should not be redrawn.
           True if the event is consumed and the chest should be redrawn.
         """
-        if event.type != KEYDOWN:
+        if event.type != KEYDOWN or self.opened:
             return None
         if event.key == K_BACKSPACE:
             # Backspace is consumed as deletion of the rightmost character;
@@ -135,8 +146,8 @@ class MiniChest(_ChestBase):
     _FONT_SIZE = 10
 
     def __init__(self, screen):
-        super().__init__(
-            'mini_chest', screen, (RECT.w / 2, RECT.h * 7 / 8), (-0.5, -1))
+        super().__init__(('mini_chest', 'mini_chest_opened'), screen,
+                         (RECT.w / 2, RECT.h * 7 / 8), (-0.5, -1))
 
 
 class FrontDoor(img.Factory):
@@ -178,11 +189,10 @@ class LightSwitchBase(img.Factory):
             img.load(name, screen, position, shift) for name in names]
 
     def draw(self):
-        self._images[bool(self.on)].draw()
+        self._images[self.on].draw()
 
     def collidepoint(self, pos):
-        # Assumption: both images are the same size.
-        return self._images[0].collidepoint(pos)
+        return self._images[self.on].collidepoint(pos)
 
 
 class LightSwitch(LightSwitchBase):

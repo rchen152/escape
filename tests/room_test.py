@@ -100,6 +100,19 @@ class ChestTest(test_utils.ImgTestCase):
                 test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r')), True)
         self.assertEqual(self.chest.text, 'r')
 
+    def test_opened(self):
+        self.chest.text = 'AYP'
+        self.assertTrue(self.chest.opened)
+
+    def test_not_opened(self):
+        self.chest.text = ''
+        self.assertFalse(self.chest.opened)
+
+    def test_send_opened(self):
+        self.chest.text = 'AYP'
+        self.assertIsNone(self.chest.send(
+            test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r')))
+
 
 class FrontDoorTest(test_utils.ImgTestCase):
 

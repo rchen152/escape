@@ -230,7 +230,12 @@ class Game(GameState):
         if response is None:
             return False
         if response:
-            self._images.chest.draw()
-            pygame.display.update()
+            if self._images.chest.opened:
+                self.draw()
+            else:
+                # Optimization: only redraw the chest area.
+                self.screen.fill(self._wall_color)
+                self._images.chest.draw()
+                pygame.display.update()
             self._images.mini_chest.text = self._images.chest.text
         return True
