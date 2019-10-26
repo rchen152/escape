@@ -118,7 +118,8 @@ class FrontDoorTest(test_utils.ImgTestCase):
 
     def setUp(self):
         super().setUp()
-        self.front_door = room.FrontDoor(self.screen)
+        with test_utils.patch('pygame.font'):
+            self.front_door = room.FrontDoor(self.screen)
         self.colors = []
 
     def test_collidepoint_no_revealed(self):

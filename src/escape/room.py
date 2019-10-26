@@ -77,6 +77,10 @@ def quadrant(pos):
     return Quadrant.BOTTOM
 
 
+def font(size):
+    return pygame.font.SysFont('couriernew', size, bold=True)
+
+
 class _ChestBase(img.Factory):
 
     _CHARPOS: List[Tuple[int, int]] = None
@@ -86,8 +90,7 @@ class _ChestBase(img.Factory):
 
     def __init__(self, names, screen, position, shift):
         super().__init__(screen)
-        self._font = pygame.font.SysFont(
-            'couriernew', self._FONT_SIZE, bold=True)
+        self._font = font(self._FONT_SIZE)
         self._images = [
             img.load(name, screen, position, shift) for name in names]
         self.text = ''
@@ -157,15 +160,34 @@ class FrontDoor(img.Factory):
     _RECT = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
     _GAP = pygame.Rect(_RECT.right - 5, _RECT.top - 2, 10, _RECT.h + 2)
 
+    _DIGITS = {
+        '1': (570, 343),
+        '2': (580, 343),
+        '3': (589, 343),
+        '4': (569, 355),
+        '5': (579, 355),
+        '6': (587, 355),
+        '7': (569, 367),
+        '8': (579, 367),
+        '9': (587, 367),
+        '0': (579, 378),
+    }
+
     def __init__(self, screen):
         super().__init__(screen)
         self._door = img.load('door', screen, (RECT.w / 2, RECT.h), (-0.5, -1))
+
+        ft = font(10)
+        self._digits = tuple(ft.render(d, 0, color.BLACK) for d in self._DIGITS)
+
         self.revealed = False
         self.light_switch_on = True
 
     def draw(self):
         if self.revealed:
             self._door.draw()
+            for i, pos in enumerate(self._DIGITS.values()):
+                self._screen.blit(self._digits[i], pos)
             return
         if self.light_switch_on:
             gap_color = color.DARK_GREY_1
