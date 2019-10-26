@@ -112,6 +112,10 @@ class Game(GameState):
     def _draw_front_wall(self):
         self._images.front_door.draw()
 
+    def _draw_front_keypad(self):
+        self.screen.fill(color.DARK_GREY_2)
+        self._images.front_keypad.draw()
+
     def _draw_floor(self):
         self._images.chest.draw()
 
@@ -173,7 +177,10 @@ class Game(GameState):
     def _handle_front_wall_click(self, pos):
         if not self._images.front_door.collidepoint(pos):
             return False
-        self._images.front_door.revealed = True
+        if self._images.front_door.revealed:
+            self.view = room.View.FRONT_KEYPAD
+        else:
+            self._images.front_door.revealed = True
         return True
 
     def _toggle_light_switch(self):

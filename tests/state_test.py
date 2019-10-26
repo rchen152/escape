@@ -201,6 +201,16 @@ class GameTest(GameTestCase):
         self.assertEqual(self.game.view, room.View.LEFT_WALL)
         self.assertEqual(self.num_updates, 4)
 
+    def test_front_keypad_view(self):
+        self.game.handle_click(_click(0, 0))
+        self.assertEqual(self.game.view, room.View.FRONT_WALL)
+        self.game.handle_click(_click(3 * room.RECT.w / 5 - 2, room.RECT.h / 2))
+        self.game.handle_click(_click(room.RECT.w / 2, room.RECT.h / 2))
+        self.assertEqual(self.game.view, room.View.FRONT_KEYPAD)
+        self.game.handle_click(_click(0, 0))
+        self.assertEqual(self.game.view, room.View.FRONT_WALL)
+        self.assertEqual(self.num_updates, 5)
+
 
 class ChestTest(GameTestCase):
 

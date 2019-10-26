@@ -121,16 +121,21 @@ class FrontDoorTest(test_utils.ImgTestCase):
         self.front_door = room.FrontDoor(self.screen)
         self.colors = []
 
-    def test_collidepoint(self):
+    def test_collidepoint_no_revealed(self):
         self.front_door.revealed = False
         self.assertTrue(
             self.front_door.collidepoint(self.front_door._GAP.center))
+        self.assertFalse(
+            self.front_door.collidepoint((room.RECT.w / 2, room.RECT.h / 2)))
         self.assertFalse(self.front_door.collidepoint((0, 0)))
 
-    def test_no_collidepoint(self):
+    def test_collidepoint_revealed(self):
         self.front_door.revealed = True
-        self.assertFalse(
+        self.assertTrue(
             self.front_door.collidepoint(self.front_door._GAP.center))
+        self.assertTrue(
+            self.front_door.collidepoint((room.RECT.w / 2, room.RECT.h / 2)))
+        self.assertFalse(self.front_door.collidepoint((0, 0)))
 
     def mock_draw(self, screen, draw_color, rect, width=0):
         del screen, rect, width  # unused
@@ -148,8 +153,7 @@ class FrontDoorTest(test_utils.ImgTestCase):
 
     def test_draw_unlit_revealed(self):
         self._draw(False, True)
-        self.assertEqual(
-            self.colors, [color.BLACK, color.DARK_GREY_2, color.DARK_GREY_2])
+        self.assertFalse(self.colors)
 
     def test_draw_lit_unrevealed(self):
         self._draw(True, False)
@@ -157,8 +161,7 @@ class FrontDoorTest(test_utils.ImgTestCase):
 
     def test_draw_lit_revealed(self):
         self._draw(True, True)
-        self.assertEqual(
-            self.colors, [color.BLACK, color.DARK_GREY_1, color.GREY])
+        self.assertFalse(self.colors)
 
 
 class LightSwitchTest(test_utils.ImgTestCase):

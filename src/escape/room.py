@@ -22,6 +22,7 @@ class View(enum.Enum):
     BACK_WALL = 5
     DEFAULT = 6
     LEFT_WINDOW = 7
+    FRONT_KEYPAD = 8
 
 
 class Quadrant(enum.Enum):
@@ -42,6 +43,7 @@ ROTATIONS = {View.LEFT_WALL: {Quadrant.LEFT: View.FRONT_WALL.value,
 ROTATIONS[View.FRONT_WALL] = {quad: (2 - quad.value) % 4 for quad in Quadrant}
 ROTATIONS[View.BACK_WALL] = ROTATIONS[View.DEFAULT] = {}
 ROTATIONS[View.LEFT_WINDOW] = {quad: View.LEFT_WALL for quad in Quadrant}
+ROTATIONS[View.FRONT_KEYPAD] = {quad: View.FRONT_WALL for quad in Quadrant}
 
 
 def at_edge(pos):
@@ -154,29 +156,26 @@ class FrontDoor(img.Factory):
 
     _RECT = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
     _GAP = pygame.Rect(_RECT.right - 5, _RECT.top - 2, 10, _RECT.h + 2)
-    _PANEL = pygame.Rect(_RECT.left + 2, _RECT.top + 2, 20, _RECT.h - 2)
 
     def __init__(self, screen):
         super().__init__(screen)
+        self._door = img.load('door', screen, (RECT.w / 2, RECT.h), (-0.5, -1))
         self.revealed = False
         self.light_switch_on = True
 
     def draw(self):
+        if self.revealed:
+            self._door.draw()
+            return
         if self.light_switch_on:
-            wall_color = color.GREY
             gap_color = color.DARK_GREY_1
         else:
-            wall_color = gap_color = color.DARK_GREY_2
-        if self.revealed:
-            pygame.draw.rect(self._screen, color.BLACK, self._RECT)
-            pygame.draw.rect(self._screen, gap_color, self._RECT, 5)
-            pygame.draw.rect(self._screen, wall_color, self._PANEL)
-        else:
-            pygame.draw.rect(self._screen, gap_color, self._RECT, 5)
-            pygame.draw.rect(self._screen, gap_color, self._GAP)
+            gap_color = color.DARK_GREY_2
+        pygame.draw.rect(self._screen, gap_color, self._RECT, 5)
+        pygame.draw.rect(self._screen, gap_color, self._GAP)
 
     def collidepoint(self, pos):
-        return not self.revealed and self._GAP.collidepoint(pos)
+        return (self._door if self.revealed else self._GAP).collidepoint(pos)
 
 
 class LightSwitchBase(img.Factory):
@@ -216,6 +215,9 @@ class Images:
         self.mini_chest = img.load(screen, factory=MiniChest)
 
         self.front_door = img.load(screen, factory=FrontDoor)
+
+        self.front_keypad = img.load(
+            'keypad', screen, (RECT.w / 2, 0), (-0.5, 0))
 
         self.light_switch = img.load(screen, factory=LightSwitch)
         self.mini_light_switch = img.load(screen, factory=MiniLightSwitch)
