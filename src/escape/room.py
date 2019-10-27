@@ -4,7 +4,7 @@ import enum
 import pygame
 from pygame.locals import *
 import string
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from . import color
 from . import img
 
@@ -83,8 +83,8 @@ def font(size):
 
 class _ChestBase(img.Factory):
 
-    _CHARPOS: List[Tuple[int, int]] = None
-    _FONT_SIZE: int = None
+    _CHARPOS: List[Tuple[int, int]]
+    _FONT_SIZE: int
 
     _KEY = 'AYP'
 
@@ -155,7 +155,23 @@ class MiniChest(_ChestBase):
                          (RECT.w / 2, RECT.h * 7 / 8), (-0.5, -1))
 
 
-class FrontDoor(img.Factory):
+class _DigitsBase(img.Factory):
+
+    _DIGITS: Dict[str, Tuple[int, int]]
+    _FONT_SIZE: int
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # pytype: disable=wrong-arg-count
+        ft = font(self._FONT_SIZE)
+        self._digits = tuple(ft.render(d, 0, color.BLACK) for d in self._DIGITS)
+
+    def draw(self):
+        super().draw()
+        for i, pos in enumerate(self._DIGITS.values()):
+            self._screen.blit(self._digits[i], pos)
+
+
+class FrontDoor(_DigitsBase):
 
     _RECT = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
     _GAP = pygame.Rect(_RECT.right - 5, _RECT.top - 2, 10, _RECT.h + 2)
@@ -172,22 +188,18 @@ class FrontDoor(img.Factory):
         '9': (587, 367),
         '0': (579, 378),
     }
+    _FONT_SIZE = 10
 
     def __init__(self, screen):
         super().__init__(screen)
         self._door = img.load('door', screen, (RECT.w / 2, RECT.h), (-0.5, -1))
-
-        ft = font(10)
-        self._digits = tuple(ft.render(d, 0, color.BLACK) for d in self._DIGITS)
-
         self.revealed = False
         self.light_switch_on = True
 
     def draw(self):
         if self.revealed:
             self._door.draw()
-            for i, pos in enumerate(self._DIGITS.values()):
-                self._screen.blit(self._digits[i], pos)
+            super().draw()
             return
         if self.light_switch_on:
             gap_color = color.DARK_GREY_1
@@ -230,6 +242,26 @@ class MiniLightSwitch(LightSwitchBase):
                          screen, (RECT.w * 7 / 8, RECT.h / 2), (-0.5, -1))
 
 
+class KeyPad(_DigitsBase, img.PngFactory):
+
+    _DIGITS = {
+        '1': (417, 183),
+        '2': (487, 183),
+        '3': (557, 183),
+        '4': (417, 270),
+        '5': (487, 270),
+        '6': (557, 270),
+        '7': (417, 355),
+        '8': (487, 355),
+        '9': (557, 355),
+        '0': (487, 442),
+    }
+    _FONT_SIZE = 90
+
+    def __init__(self, screen):
+        super().__init__('keypad', screen, (RECT.w / 2, 0), (-0.5, 0))
+
+
 class Images:
 
     def __init__(self, screen):
@@ -238,8 +270,7 @@ class Images:
 
         self.front_door = img.load(screen, factory=FrontDoor)
 
-        self.front_keypad = img.load(
-            'keypad', screen, (RECT.w / 2, 0), (-0.5, 0))
+        self.front_keypad = img.load(screen, factory=KeyPad)
 
         self.light_switch = img.load(screen, factory=LightSwitch)
         self.mini_light_switch = img.load(screen, factory=MiniLightSwitch)
