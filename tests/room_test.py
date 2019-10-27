@@ -114,39 +114,37 @@ class ChestTest(test_utils.ImgTestCase):
             test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r')))
 
 
-class FrontDoorTest(test_utils.ImgTestCase):
+class DoorTest(test_utils.ImgTestCase):
 
     def setUp(self):
         super().setUp()
         with test_utils.patch('pygame.font'):
-            self.front_door = room.FrontDoor(self.screen)
+            self.door = room.Door(self.screen)
         self.colors = []
 
     def test_collidepoint_no_revealed(self):
-        self.front_door.revealed = False
-        self.assertTrue(
-            self.front_door.collidepoint(self.front_door._GAP.center))
+        self.door.revealed = False
+        self.assertTrue(self.door.collidepoint(self.door._GAP.center))
         self.assertFalse(
-            self.front_door.collidepoint((room.RECT.w / 2, room.RECT.h / 2)))
-        self.assertFalse(self.front_door.collidepoint((0, 0)))
+            self.door.collidepoint((room.RECT.w / 2, room.RECT.h / 2)))
+        self.assertFalse(self.door.collidepoint((0, 0)))
 
     def test_collidepoint_revealed(self):
-        self.front_door.revealed = True
+        self.door.revealed = True
+        self.assertTrue(self.door.collidepoint(self.door._GAP.center))
         self.assertTrue(
-            self.front_door.collidepoint(self.front_door._GAP.center))
-        self.assertTrue(
-            self.front_door.collidepoint((room.RECT.w / 2, room.RECT.h / 2)))
-        self.assertFalse(self.front_door.collidepoint((0, 0)))
+            self.door.collidepoint((room.RECT.w / 2, room.RECT.h / 2)))
+        self.assertFalse(self.door.collidepoint((0, 0)))
 
     def mock_draw(self, screen, draw_color, rect, width=0):
         del screen, rect, width  # unused
         self.colors.append(draw_color)
 
     def _draw(self, light_switch_on, revealed):
-        self.front_door.light_switch_on = light_switch_on
-        self.front_door.revealed = revealed
+        self.door.light_switch_on = light_switch_on
+        self.door.revealed = revealed
         with unittest.mock.patch.object(pygame.draw, 'rect', self.mock_draw):
-            self.front_door.draw()
+            self.door.draw()
 
     def test_draw_unlit_unrevealed(self):
         self._draw(False, False)
@@ -193,10 +191,37 @@ class LightSwitchTest(test_utils.ImgTestCase):
 
 class KeyPadTest(test_utils.ImgTestCase):
 
-    def test_basic(self):
+    def setUp(self):
+        super().setUp()
         with test_utils.patch('pygame.font'):
-            keypad = room.KeyPad(self.screen)
-        keypad.draw()  # smoke test
+            self.keypad = room.KeyPad(self.screen)
+
+    def test_draw(self):
+        self.keypad.draw()  # smoke test
+
+    def test_opened(self):
+        self.keypad.text = '9710'
+        self.assertTrue(self.keypad.opened)
+
+    def test_not_opened(self):
+        self.keypad.text = ''
+        self.assertFalse(self.keypad.opened)
+
+    def test_send(self):
+        response = self.keypad.send(
+            test_utils.MockEvent(KEYDOWN, key=K_1, unicode='1'))
+        self.assertIs(response, True)
+        self.assertEqual(self.keypad.text, '1')
+
+    def test_nondigit(self):
+        response = self.keypad.send(
+            test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r'))
+        self.assertIsNone(response)
+        self.assertFalse(self.keypad.text)
+
+    def test_send_unrelated(self):
+        self.assertIsNone(self.keypad.send(test_utils.MockEvent(QUIT)))
+        self.assertFalse(self.keypad.text)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 """Game room."""
 
+import abc
 import enum
 import pygame
 from pygame.locals import *
@@ -81,12 +82,52 @@ def font(size):
     return pygame.font.SysFont('couriernew', size, bold=True)
 
 
+class _TextMixin(abc.ABC):
+
+    _MAX_TEXT_LENGTH: int
+    text: str
+
+    @abc.abstractmethod
+    def accept_event(self, event):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def to_char(self, event):
+        raise NotImplementedError()
+
+    def send(self, event):
+        """Sends an event that may be consumed as text input.
+
+        Args:
+          event: An event.
+
+        Returns:
+          None if the event should not be consumed.
+          False if the event is consumed but a redraw is not required.
+          True if the event is consumed and a redraw is required.
+        """
+        if not self.accept_event(event):
+            return None
+        if event.key == K_BACKSPACE:
+            # Backspace is consumed as deletion of the rightmost character;
+            # whether it requires a redraw depends on whether there exists a
+            # character to delete.
+            redraw = bool(self.text)
+            self.text = self.text[:-1]
+            return redraw
+        c = self.to_char(event)
+        if not c:
+            return None
+        if len(self.text) >= self._MAX_TEXT_LENGTH:
+            return False
+        self.text += c
+        return True
+
+
 class _ChestBase(img.Factory):
 
     _CHARPOS: List[Tuple[int, int]]
     _FONT_SIZE: int
-
-    _KEY = 'AYP'
 
     def __init__(self, names, screen, position, shift):
         super().__init__(screen)
@@ -97,7 +138,7 @@ class _ChestBase(img.Factory):
 
     @property
     def opened(self):
-        return self.text == self._KEY
+        return self.text == 'AYP'
 
     def draw(self):
         self._images[self.opened].draw()
@@ -109,40 +150,24 @@ class _ChestBase(img.Factory):
         return self._images[self.opened].collidepoint(pos)
 
 
-class Chest(_ChestBase):
+class Chest(_TextMixin, _ChestBase):
 
     _CHARPOS = [(496, 278), (509, 278), (521, 278)]
     _FONT_SIZE = 15
+    _MAX_TEXT_LENGTH = 3
 
     def __init__(self, screen):
         super().__init__(('chest', 'chest_opened'), screen,
                          (RECT.w / 2, 2 * RECT.h / 3), (-0.5, -1))
 
-    def send(self, event):
-        """Sends an event that may be consumed as an unlocking input.
-        event: An event.
-        Returns:
-          None if the event should not be consumed by the chest.
-          False if the event is consumed but the chest should not be redrawn.
-          True if the event is consumed and the chest should be redrawn.
-        """
-        if event.type != KEYDOWN or self.opened:
-            return None
-        if event.key == K_BACKSPACE:
-            # Backspace is consumed as deletion of the rightmost character;
-            # whether it requires a redraw depends on whether there exists a
-            # character to delete.
-            redraw = bool(self.text)
-            self.text = self.text[:-1]
-            return redraw
+    def accept_event(self, event):
+        return event.type == KEYDOWN and not self.opened
+
+    def to_char(self, event):
         if not event.unicode or event.unicode not in string.printable:
             # Aside from backspace, only printable characters are consumed.
             return None
-        if len(self.text) >= 3:
-            # We can't input more characters than there are dials on the lock.
-            return False
-        self.text += event.unicode
-        return True
+        return event.unicode
 
 
 class MiniChest(_ChestBase):
@@ -162,8 +187,9 @@ class _DigitsBase(img.Factory):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)  # pytype: disable=wrong-arg-count
-        ft = font(self._FONT_SIZE)
-        self._digits = tuple(ft.render(d, 0, color.BLACK) for d in self._DIGITS)
+        self._font = font(self._FONT_SIZE)
+        self._digits = tuple(
+            self._font.render(d, 0, color.BLACK) for d in self._DIGITS)
 
     def draw(self):
         super().draw()
@@ -171,7 +197,7 @@ class _DigitsBase(img.Factory):
             self._screen.blit(self._digits[i], pos)
 
 
-class FrontDoor(_DigitsBase):
+class Door(_DigitsBase):
 
     _RECT = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
     _GAP = pygame.Rect(_RECT.right - 5, _RECT.top - 2, 10, _RECT.h + 2)
@@ -195,11 +221,14 @@ class FrontDoor(_DigitsBase):
         self._door = img.load('door', screen, (RECT.w / 2, RECT.h), (-0.5, -1))
         self.revealed = False
         self.light_switch_on = True
+        self.text = ''
 
     def draw(self):
         if self.revealed:
             self._door.draw()
             super().draw()
+            self._screen.blit(
+                self._font.render(self.text, 0, color.BLACK), (570, 325))
             return
         if self.light_switch_on:
             gap_color = color.DARK_GREY_1
@@ -242,7 +271,7 @@ class MiniLightSwitch(LightSwitchBase):
                          screen, (RECT.w * 7 / 8, RECT.h / 2), (-0.5, -1))
 
 
-class KeyPad(_DigitsBase, img.PngFactory):
+class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
 
     _DIGITS = {
         '1': (417, 183),
@@ -257,9 +286,26 @@ class KeyPad(_DigitsBase, img.PngFactory):
         '0': (487, 442),
     }
     _FONT_SIZE = 90
+    _MAX_TEXT_LENGTH = 4
 
     def __init__(self, screen):
         super().__init__('keypad', screen, (RECT.w / 2, 0), (-0.5, 0))
+        self.text = ''
+
+    @property
+    def opened(self):
+        return self.text == '9710'
+
+    def accept_event(self, event):
+        return event.type == KEYDOWN and not self.opened
+
+    def to_char(self, event):
+        return event.unicode if event.unicode.isdigit() else None
+
+    def draw(self):
+        super().draw()
+        self._screen.blit(
+            self._font.render(self.text, 0, color.BLACK), (405, 50))
 
 
 class Images:
@@ -268,9 +314,9 @@ class Images:
         self.chest = img.load(screen, factory=Chest)
         self.mini_chest = img.load(screen, factory=MiniChest)
 
-        self.front_door = img.load(screen, factory=FrontDoor)
+        self.door = img.load(screen, factory=Door)
 
-        self.front_keypad = img.load(screen, factory=KeyPad)
+        self.keypad = img.load(screen, factory=KeyPad)
 
         self.light_switch = img.load(screen, factory=LightSwitch)
         self.mini_light_switch = img.load(screen, factory=MiniLightSwitch)

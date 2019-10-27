@@ -110,11 +110,11 @@ class Game(GameState):
         self._images.math.draw()
 
     def _draw_front_wall(self):
-        self._images.front_door.draw()
+        self._images.door.draw()
 
     def _draw_front_keypad(self):
         self.screen.fill(color.DARK_GREY_2)
-        self._images.front_keypad.draw()
+        self._images.keypad.draw()
 
     def _draw_floor(self):
         self._images.chest.draw()
@@ -175,12 +175,12 @@ class Game(GameState):
         return True
 
     def _handle_front_wall_click(self, pos):
-        if not self._images.front_door.collidepoint(pos):
+        if not self._images.door.collidepoint(pos):
             return False
-        if self._images.front_door.revealed:
+        if self._images.door.revealed:
             self.view = room.View.FRONT_KEYPAD
         else:
-            self._images.front_door.revealed = True
+            self._images.door.revealed = True
         return True
 
     def _toggle_light_switch(self):
@@ -190,7 +190,7 @@ class Game(GameState):
             self._wall_color = color.GREY
         else:
             self._wall_color = color.DARK_GREY_2
-        self._images.front_door.light_switch_on = self._images.light_switch.on
+        self._images.door.light_switch_on = self._images.light_switch.on
 
     def _handle_right_wall_click(self, pos):
         if not self._images.light_switch.collidepoint(pos):
@@ -241,8 +241,19 @@ class Game(GameState):
                 self.draw()
             else:
                 # Optimization: only redraw the chest area.
-                self.screen.fill(self._wall_color)
                 self._images.chest.draw()
                 pygame.display.update()
             self._images.mini_chest.text = self._images.chest.text
+        return True
+
+    def handle_keypad_input(self, event):
+        if self.view is not room.View.FRONT_KEYPAD:
+            return False
+        response = self._images.keypad.send(event)
+        if response is None:
+            return False
+        if response:
+            self._images.keypad.draw()
+            pygame.display.update()
+            self._images.door.text = self._images.keypad.text
         return True

@@ -254,7 +254,7 @@ class LightSwitchTest(GameTestCase):
 
     def test_synced(self):
         self.assertTrue(self.game._images.light_switch.on)
-        self.assertTrue(self.game._images.front_door.light_switch_on)
+        self.assertTrue(self.game._images.door.light_switch_on)
         self.game.view = room.View.CEILING
         blit_count = self.screen.blit.call_count
         self.game.draw()
@@ -273,7 +273,7 @@ class LightSwitchTest(GameTestCase):
             MOUSEBUTTONDOWN, button=1,
             pos=(room.RECT.w / 2, room.RECT.h / 2 - 1)))
         self.assertFalse(self.game._images.light_switch.on)
-        self.assertFalse(self.game._images.front_door.light_switch_on)
+        self.assertFalse(self.game._images.door.light_switch_on)
 
 
 if __name__ == '__main__':
