@@ -191,5 +191,13 @@ class LightSwitchTest(test_utils.ImgTestCase):
         self.assertFalse(self.light_switch.collidepoint((0, 0)))
 
 
+class KeyPadTest(test_utils.ImgTestCase):
+
+    def test_basic(self):
+        with test_utils.patch('pygame.font'):
+            keypad = room.KeyPad(self.screen)
+        keypad.draw()  # smoke test
+
+
 if __name__ == '__main__':
     unittest.main()
