@@ -214,6 +214,18 @@ class KeyPadTest(test_utils.ImgTestCase):
         self.keypad.text = '3 + 5'
         self.assertTrue(self.keypad.opened)
 
+    def test_text_before_opened(self):
+        self.keypad.text = ''
+        assert not self.keypad.opened
+        self.keypad.text = '5555'
+        self.assertEqual(self.keypad.text, '5555')
+
+    def test_text_after_opened(self):
+        self.keypad.text = '9710'
+        assert self.keypad.opened
+        self.keypad.text = '3+5'
+        self.assertEqual(self.keypad.text, '3+5')
+
     def test_send(self):
         response = self.keypad.send(
             test_utils.MockEvent(KEYDOWN, key=K_1, unicode='1'))
@@ -242,7 +254,7 @@ class KeyPadTestTest(test_utils.ImgTestCase):
                         test_utils.patch('pygame.font')}
         for patch in self.patches:
             patch.start()
-        self._keypad_test = room.KeyPadTest(room.KeyPad(self.screen))
+        self.keypad_test = room.KeyPadTest(room.KeyPad(self.screen))
 
     def tearDown(self):
         super().tearDown()
@@ -254,7 +266,7 @@ class KeyPadTestTest(test_utils.ImgTestCase):
             random_ints += self._DEFAULT_RANDINTS
         with unittest.mock.patch.object(random, 'randint') as mock_randint:
             mock_randint.side_effect = random_ints
-            return self._keypad_test._generate_question()
+            return self.keypad_test._generate_question()
 
     def test_add(self):
         self.assertEqual(self._generate_question(5, 3, 0), ('3', '+', '2', '5'))
@@ -295,32 +307,40 @@ class KeyPadTestTest(test_utils.ImgTestCase):
                          ('4', '+', '(-1)', '3'))
 
     def test_start(self):
-        self._keypad_test._active = False
-        self._keypad_test._keypad.text_color = color.BLACK
-        self._keypad_test.start()
-        self.assertTrue(self._keypad_test._active)
-        self.assertEqual(self._keypad_test._keypad.text_color, color.RED)
+        self.keypad_test._active = False
+        self.keypad_test._keypad.text_color = color.BLACK
+        self.keypad_test.start()
+        self.assertTrue(self.keypad_test._active)
+        self.assertEqual(self.keypad_test._keypad.text_color, color.RED)
 
     def test_stop(self):
-        self._keypad_test._active = True
-        self._keypad_test._keypad.text_color = color.RED
-        self._keypad_test.stop()
-        self.assertFalse(self._keypad_test._active)
-        self.assertEqual(self._keypad_test._keypad.text_color, color.BLACK)
+        self.keypad_test._active = True
+        self.keypad_test._keypad.text_color = color.RED
+        self.keypad_test.stop()
+        self.assertFalse(self.keypad_test._active)
+        self.assertEqual(self.keypad_test._keypad.text_color, color.BLACK)
 
     def test_send_inactive(self):
-        self._keypad_test._active = False
-        self.assertTrue(self._keypad_test.send(None))
+        self.keypad_test._active = False
+        self.assertTrue(self.keypad_test.send(None))
 
     def test_send_active_ignore(self):
-        self._keypad_test._active = True
+        self.keypad_test._active = True
         self.assertFalse(
-            self._keypad_test.send(test_utils.MockEvent(MOUSEBUTTONDOWN)))
+            self.keypad_test.send(test_utils.MockEvent(MOUSEBUTTONDOWN)))
 
     def test_send_active_consume(self):
-        self._keypad_test._active = True
+        self.keypad_test._active = True
         self.assertTrue(
-            self._keypad_test.send(test_utils.MockEvent(room.KeyPadTest._TICK)))
+            self.keypad_test.send(test_utils.MockEvent(room.KeyPadTest._TICK)))
+
+    def test_question(self):
+        self.keypad_test._question = None
+        self.keypad_test.start()
+        self.keypad_test.send(test_utils.MockEvent(room.KeyPadTest._TICK))
+        self.assertIsNotNone(self.keypad_test._question)
+        self.keypad_test.stop()
+        self.assertIsNone(self.keypad_test._question)
 
 
 if __name__ == '__main__':

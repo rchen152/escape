@@ -293,9 +293,9 @@ class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
         '9': (557, 355),
         '0': (487, 442),
     }
-    _FONT_SIZE = 90
+    _FONT_SIZE = 85
     _MAX_TEXT_LENGTH = 4
-    _TEXT_POS = (405, 50)
+    _TEXT_POS = (410, 50)
 
     def __init__(self, screen):
         super().__init__('keypad', screen, (RECT.w / 2, 0), (-0.5, 0))
@@ -309,14 +309,30 @@ class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
         # the keypad is already open
         self._opening_input = ''
 
+    def _resized_text(self, value):
+        assert self.opened
+        max_sz = self._font.size(self._opening_input)
+        ft_sz = self._FONT_SIZE
+        ft = self._font
+        sz = ft.size(value)
+        while any(dim > max_dim for dim, max_dim in zip(sz, max_sz)):
+            ft_sz -= 10
+            ft = font(ft_sz)
+            sz = ft.size(value)
+        pos = tuple(self._TEXT_POS[i] + (max_sz[i] - sz[i]) / 2
+                    for i in range(2))
+        return self._text._replace(value=value, pos=pos, font=ft)
+
     @property
     def text(self):
         return self._text.value
 
     @text.setter
     def text(self, value):
-        self._text = self._text._replace(value=value)
-        if not self.opened:
+        if self.opened:
+            self._text = self._resized_text(value)
+        else:
+            self._text = self._text._replace(value=value)
             self._opening_input = value
 
     @property
@@ -381,6 +397,7 @@ class KeyPadTest:
     def __init__(self, keypad):
         self._keypad = keypad
         self._active = False
+        self._question = None
 
     def _generate_question(self):
         answer = random.randint(0, 9)
@@ -416,6 +433,7 @@ class KeyPadTest:
     def stop(self):
         assert self._active
         self._active = False
+        self._question = None
         self._keypad.set_initial_text()
         pygame.time.set_timer(self._TICK, 0)
 
@@ -424,6 +442,9 @@ class KeyPadTest:
             self.start()
             return True
         elif event.type == self._TICK:
+            if not self._question:
+                self._question = self._generate_question()
+                self._keypad.text = ''.join(self._question[:3])
             self._flip_text_color()
             return True
         return False
