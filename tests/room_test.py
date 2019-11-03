@@ -2,6 +2,7 @@
 
 import pygame
 from pygame.locals import *
+import random
 import unittest
 import unittest.mock
 
@@ -222,6 +223,61 @@ class KeyPadTest(test_utils.ImgTestCase):
     def test_send_unrelated(self):
         self.assertIsNone(self.keypad.send(test_utils.MockEvent(QUIT)))
         self.assertFalse(self.keypad.text)
+
+
+class KeyPadTestTest(unittest.TestCase):
+
+    _DEFAULT_RANDINTS = (5, 3, 0)
+    _DEFAULT_Q = ('3', '+', '2', '5')
+
+    def setUp(self):
+        super().setUp()
+        self._keypad_test = room.KeyPadTest()
+
+    def _generate_question(self, *random_ints, add_default=False):
+        if add_default:
+            random_ints += self._DEFAULT_RANDINTS
+        with unittest.mock.patch.object(random, 'randint') as mock_randint:
+            mock_randint.side_effect = random_ints
+            return self._keypad_test._generate_question()
+
+    def test_add(self):
+        self.assertEqual(self._generate_question(5, 3, 0), ('3', '+', '2', '5'))
+
+    def test_mul(self):
+        self.assertEqual(self._generate_question(6, 2, 1), ('2', '*', '3', '6'))
+
+    def test_sub(self):
+        self.assertEqual(self._generate_question(3, 4, 2), ('7', '-', '4', '3'))
+
+    def test_div(self):
+        self.assertEqual(self._generate_question(2, 4, 3), ('8', '/', '4', '2'))
+
+    def test_skip_zero_mul(self):
+        self.assertEqual(self._generate_question(4, 0, 1, add_default=True),
+                         self._DEFAULT_Q)
+
+    def test_skip_zero_div(self):
+        self.assertEqual(self._generate_question(4, 0, 3, add_default=True),
+                         self._DEFAULT_Q)
+
+    def test_ans_zero_mul(self):
+        self.assertEqual(self._generate_question(0, 5, 1), ('5', '*', '0', '0'))
+
+    def test_ans_zero_div(self):
+        self.assertEqual(self._generate_question(0, 5, 3), ('0', '/', '5', '0'))
+
+    def test_float(self):
+        self.assertEqual(self._generate_question(1, 5, 1),
+                         ('5', '*', '0.2', '1'))
+
+    def test_skip_float(self):
+        self.assertEqual(self._generate_question(1, 3, 1, add_default=True),
+                         self._DEFAULT_Q)
+
+    def test_negative(self):
+        self.assertEqual(self._generate_question(3, 4, 0),
+                         ('4', '+', '(-1)', '3'))
 
 
 if __name__ == '__main__':

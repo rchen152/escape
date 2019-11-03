@@ -4,6 +4,7 @@ import abc
 import enum
 import pygame
 from pygame.locals import *
+import random
 import string
 from typing import Dict, List, Tuple
 from . import color
@@ -332,3 +333,35 @@ class Images:
 
         self.zodiac = img.load('zodiac', screen)
         self.mini_zodiac = img.load('mini_zodiac', screen)
+
+
+class KeyPadTest:
+
+    _OPERATOR_REPR = {int.__add__: '+', int.__mul__: '*', int.__sub__: '-',
+                      int.__truediv__: '/'}
+    _OPERATORS = tuple(_OPERATOR_REPR)
+
+    def _generate_question(self):
+        answer = random.randint(0, 9)
+        operand1 = random.randint(0, 9)
+        operator_idx = random.randint(0, 3)
+        operator = self._OPERATORS[operator_idx]
+        if not operand1 and operator_idx % 2:  # avoid 0 * x and x / 0
+            return self._generate_question()
+        # Use the inverse operator to compute the other operand.
+        operand2 = self._OPERATORS[(operator_idx + 2) % 4](answer, operand1)
+        if round(operand2, 1) != operand2:
+            # Reject questions where the second operand has more than one digit
+            # after the decimal point.
+            return self._generate_question()
+        if operator_idx > 1:  # for - and /, we need to flip the operands
+            operand1, operand2 = operand2, operand1
+
+        def to_str(n):
+            # int / int produces a float - convert floats to ints when possible.
+            s = str(int(n) if round(n, 0) == n else n)
+            # Parenthesize negative numbers for readability.
+            return f'({s})' if n < 0 else s
+
+        return (to_str(operand1), self._OPERATOR_REPR[operator],
+                to_str(operand2), str(answer))
