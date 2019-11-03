@@ -302,8 +302,12 @@ class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
         self.set_initial_text()
 
     def set_initial_text(self):
+        # the text that renders on the keypad
         self._text = _KeyPadText(value='', pos=self._TEXT_POS, font=self._font,
                                  color=color.BLACK)
+        # the current input for opening the keypad, differs from self.text when
+        # the keypad is already open
+        self._opening_input = ''
 
     @property
     def text(self):
@@ -312,6 +316,8 @@ class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
     @text.setter
     def text(self, value):
         self._text = self._text._replace(value=value)
+        if not self.opened:
+            self._opening_input = value
 
     @property
     def text_color(self):
@@ -323,7 +329,7 @@ class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
 
     @property
     def opened(self):
-        return self.text == '9710'
+        return self._opening_input == '9710'
 
     def accept_event(self, event):
         return event.type == KEYDOWN and not self.opened

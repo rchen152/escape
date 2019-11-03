@@ -208,6 +208,12 @@ class KeyPadTest(test_utils.ImgTestCase):
         self.keypad.text = ''
         self.assertFalse(self.keypad.opened)
 
+    def test_stay_opened(self):
+        self.keypad.text = '9710'
+        self.assertTrue(self.keypad.opened)
+        self.keypad.text = '3 + 5'
+        self.assertTrue(self.keypad.opened)
+
     def test_send(self):
         response = self.keypad.send(
             test_utils.MockEvent(KEYDOWN, key=K_1, unicode='1'))

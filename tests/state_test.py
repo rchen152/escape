@@ -292,16 +292,19 @@ class KeyPadTest(GameTestCase):
         consumed = self.game.handle_keypad_test(
             test_utils.MockEvent(MOUSEBUTTONDOWN))
         self.assertFalse(consumed)
+        self.assertFalse(self.game._images.keypad.opened)
         self.assertFalse(self.game._keypad_test._active)
         # test is active after keypad is opened
         self.game._images.door.text = self.game._images.keypad.text = '9710'
         consumed = self.game.handle_keypad_test(
             test_utils.MockEvent(MOUSEBUTTONDOWN))
         self.assertTrue(consumed)
+        self.assertTrue(self.game._images.keypad.opened)
         self.assertTrue(self.game._keypad_test._active)
         # clicking away stops the test and resets the keypad
         self.game.handle_click(test_utils.MockEvent(MOUSEBUTTONDOWN, button=1,
                                                     pos=(0, 0)))
+        self.assertFalse(self.game._images.keypad.opened)
         self.assertFalse(self.game._keypad_test._active)
         self.assertFalse(self.game._images.keypad.text)
         self.assertFalse(self.game._images.door.text)
