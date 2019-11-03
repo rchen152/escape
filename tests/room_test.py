@@ -254,7 +254,8 @@ class KeyPadTestTest(test_utils.ImgTestCase):
                         test_utils.patch('pygame.font')}
         for patch in self.patches:
             patch.start()
-        self.keypad_test = room.KeyPadTest(room.KeyPad(self.screen))
+        self.keypad_test = room.KeyPadTest(room.KeyPad(self.screen),
+                                           room.Door(self.screen))
 
     def tearDown(self):
         super().tearDown()
@@ -267,6 +268,9 @@ class KeyPadTestTest(test_utils.ImgTestCase):
         with unittest.mock.patch.object(random, 'randint') as mock_randint:
             mock_randint.side_effect = random_ints
             return self.keypad_test._generate_question()
+
+    def _tick(self):
+        self.keypad_test.send(test_utils.MockEvent(room.KeyPadTest._TICK))
 
     def test_add(self):
         self.assertEqual(self._generate_question(5, 3, 0), ('3', '+', '2', '5'))
@@ -337,10 +341,52 @@ class KeyPadTestTest(test_utils.ImgTestCase):
     def test_question(self):
         self.keypad_test._question = None
         self.keypad_test.start()
-        self.keypad_test.send(test_utils.MockEvent(room.KeyPadTest._TICK))
+        self._tick()
         self.assertIsNotNone(self.keypad_test._question)
         self.keypad_test.stop()
         self.assertIsNone(self.keypad_test._question)
+
+    def test_stop_after_err(self):
+        self.keypad_test.start()
+        self._tick()
+        # send a wrong answer
+        self.keypad_test.send(test_utils.MockEvent(KEYDOWN, unicode='88'))
+        self._tick()
+        self.assertEqual(self.keypad_test._keypad.text, 'ERR')
+        self._tick()
+        self.assertFalse(self.keypad_test._active)
+
+    def test_next_question(self):
+        self.keypad_test.start()
+        self._tick()
+        question = self.keypad_test._question
+        self.keypad_test.send(
+            test_utils.MockEvent(KEYDOWN, unicode=question.value[-1]))
+        self._tick()
+        self.assertEqual(self.keypad_test._keypad.text, 'OK')
+        self._tick()
+        self.assertIsNotNone(self.keypad_test._question)
+        self.assertIsNot(self.keypad_test._question, question)
+
+
+class QuestionTest(unittest.TestCase):
+
+    def test_solve_ok(self):
+        question = room._Question(('3', '*', '2', '6'))
+        question.solve('6')
+        self.assertIs(question.state, room._QuestionState.OK)
+
+    def test_solve_err(self):
+        question = room._Question(('3', '*', '2', '6'))
+        question.solve('5')
+        self.assertIs(question.state, room._QuestionState.ERR)
+
+    def test_tick(self):
+        question = room._Question(None)
+        question.tick()
+        self.assertIs(question.state, room._QuestionState.ACTIVE)
+        question.tick()
+        self.assertIs(question.state, room._QuestionState.ERR)
 
 
 if __name__ == '__main__':

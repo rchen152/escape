@@ -385,17 +385,43 @@ class Images:
         self.mini_zodiac = img.load('mini_zodiac', screen)
 
 
+class _QuestionState(enum.Enum):
+    ACTIVE = ''
+    OK = 'OK'
+    ERR = 'ERR'
+
+
+class _Question:
+
+    def __init__(self, value):
+        self.value = value
+        self.state = _QuestionState.ACTIVE
+        self._num_ticks = 0
+
+    def solve(self, answer):
+        if answer == self.value[-1]:
+            self.state = _QuestionState.OK
+        else:
+            self.state = _QuestionState.ERR
+
+    def tick(self):
+        self._num_ticks += 1
+        if self._num_ticks > 1:
+            self.state = _QuestionState.ERR
+
+
 class KeyPadTest:
 
     _TICK = pygame.USEREVENT
-    _FREQ_MS = 1000
+    _FREQ_MS = 500
 
     _OPERATOR_REPR = {int.__add__: '+', int.__mul__: '*', int.__sub__: '-',
                       int.__truediv__: '/'}
     _OPERATORS = tuple(_OPERATOR_REPR)
 
-    def __init__(self, keypad):
+    def __init__(self, keypad, door):
         self._keypad = keypad
+        self._door = door
         self._active = False
         self._question = None
 
@@ -424,10 +450,14 @@ class KeyPadTest:
         return (to_str(operand1), self._OPERATOR_REPR[operator],
                 to_str(operand2), str(answer))
 
+    def _next_question(self):
+        self._question = _Question(self._generate_question())
+        self._keypad.text = ''.join(self._question.value[:3])
+
     def start(self):
         assert not self._active
         self._active = True
-        self._flip_text_color()
+        self._keypad.text_color = color.RED
         pygame.time.set_timer(self._TICK, self._FREQ_MS)
 
     def stop(self):
@@ -435,6 +465,7 @@ class KeyPadTest:
         self._active = False
         self._question = None
         self._keypad.set_initial_text()
+        self._door.text = self._keypad.text
         pygame.time.set_timer(self._TICK, 0)
 
     def send(self, event):
@@ -442,10 +473,21 @@ class KeyPadTest:
             self.start()
             return True
         elif event.type == self._TICK:
-            if not self._question:
-                self._question = self._generate_question()
-                self._keypad.text = ''.join(self._question[:3])
+            if self._keypad.text == _QuestionState.ERR.value:
+                self.stop()
+                return True
+            elif (not self._question or
+                  self._keypad.text == _QuestionState.OK.value):
+                self._next_question()
+            elif self._question.state is not _QuestionState.ACTIVE:
+                self._keypad.text = self._question.state.value
+            else:
+                self._question.tick()
             self._flip_text_color()
+            return True
+        elif event.type == KEYDOWN and event.unicode.isdigit():
+            if self._question:
+                self._question.solve(event.unicode)
             return True
         return False
 
@@ -454,5 +496,3 @@ class KeyPadTest:
             self._keypad.text_color = color.RED
         else:
             self._keypad.text_color = color.BLACK
-        self._keypad.draw()
-        pygame.display.update()
