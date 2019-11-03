@@ -314,6 +314,14 @@ class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
         self._text = self._text._replace(value=value)
 
     @property
+    def text_color(self):
+        return self._text.color
+
+    @text_color.setter
+    def text_color(self, color):
+        self._text = self._text._replace(color=color)
+
+    @property
     def opened(self):
         return self.text == '9710'
 
@@ -357,6 +365,9 @@ class Images:
 
 class KeyPadTest:
 
+    _TICK = pygame.USEREVENT
+    _FREQ_MS = 1000
+
     _OPERATOR_REPR = {int.__add__: '+', int.__mul__: '*', int.__sub__: '-',
                       int.__truediv__: '/'}
     _OPERATORS = tuple(_OPERATOR_REPR)
@@ -393,14 +404,28 @@ class KeyPadTest:
     def start(self):
         assert not self._active
         self._active = True
+        self._flip_text_color()
+        pygame.time.set_timer(self._TICK, self._FREQ_MS)
 
     def stop(self):
         assert self._active
         self._active = False
         self._keypad.set_initial_text()
+        pygame.time.set_timer(self._TICK, 0)
 
     def send(self, event):
         if not self._active:
             self.start()
             return True
+        elif event.type == self._TICK:
+            self._flip_text_color()
+            return True
         return False
+
+    def _flip_text_color(self):
+        if self._keypad.text_color == color.BLACK:
+            self._keypad.text_color = color.RED
+        else:
+            self._keypad.text_color = color.BLACK
+        self._keypad.draw()
+        pygame.display.update()
