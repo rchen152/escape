@@ -276,5 +276,36 @@ class LightSwitchTest(GameTestCase):
         self.assertFalse(self.game._images.door.light_switch_on)
 
 
+class KeyPadTest(GameTestCase):
+
+    def test_update_text(self):
+        self.game.view = room.View.FRONT_KEYPAD
+        consumed = self.game.handle_keypad_input(
+            test_utils.MockEvent(KEYDOWN, key=K_1, unicode='1'))
+        self.assertTrue(consumed)
+        self.assertEqual(self.game._images.keypad.text, '1')
+        self.assertEqual(self.game._images.door.text, '1')
+
+    def test_test(self):
+        self.game.view = room.View.FRONT_KEYPAD
+        # test is inactive
+        consumed = self.game.handle_keypad_test(
+            test_utils.MockEvent(MOUSEBUTTONDOWN))
+        self.assertFalse(consumed)
+        self.assertFalse(self.game._keypad_test._active)
+        # test is active after keypad is opened
+        self.game._images.door.text = self.game._images.keypad.text = '9710'
+        consumed = self.game.handle_keypad_test(
+            test_utils.MockEvent(MOUSEBUTTONDOWN))
+        self.assertTrue(consumed)
+        self.assertTrue(self.game._keypad_test._active)
+        # clicking away stops the test and resets the keypad
+        self.game.handle_click(test_utils.MockEvent(MOUSEBUTTONDOWN, button=1,
+                                                    pos=(0, 0)))
+        self.assertFalse(self.game._keypad_test._active)
+        self.assertFalse(self.game._images.keypad.text)
+        self.assertFalse(self.game._images.door.text)
+
+
 if __name__ == '__main__':
     unittest.main()

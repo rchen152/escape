@@ -225,14 +225,15 @@ class KeyPadTest(test_utils.ImgTestCase):
         self.assertFalse(self.keypad.text)
 
 
-class KeyPadTestTest(unittest.TestCase):
+class KeyPadTestTest(test_utils.ImgTestCase):
 
     _DEFAULT_RANDINTS = (5, 3, 0)
     _DEFAULT_Q = ('3', '+', '2', '5')
 
     def setUp(self):
         super().setUp()
-        self._keypad_test = room.KeyPadTest()
+        with test_utils.patch('pygame.font'):
+            self._keypad_test = room.KeyPadTest(room.KeyPad(self.screen))
 
     def _generate_question(self, *random_ints, add_default=False):
         if add_default:
@@ -278,6 +279,24 @@ class KeyPadTestTest(unittest.TestCase):
     def test_negative(self):
         self.assertEqual(self._generate_question(3, 4, 0),
                          ('4', '+', '(-1)', '3'))
+
+    def test_start(self):
+        self._keypad_test._active = False
+        self._keypad_test.start()
+        self.assertTrue(self._keypad_test._active)
+
+    def test_stop(self):
+        self._keypad_test._active = True
+        self._keypad_test.stop()
+        self.assertFalse(self._keypad_test._active)
+
+    def test_send_inactive(self):
+        self._keypad_test._active = False
+        self.assertTrue(self._keypad_test.send(None))
+
+    def test_send_active(self):
+        self._keypad_test._active = True
+        self.assertFalse(self._keypad_test.send(None))
 
 
 if __name__ == '__main__':

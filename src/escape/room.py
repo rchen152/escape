@@ -361,6 +361,10 @@ class KeyPadTest:
                       int.__truediv__: '/'}
     _OPERATORS = tuple(_OPERATOR_REPR)
 
+    def __init__(self, keypad):
+        self._keypad = keypad
+        self._active = False
+
     def _generate_question(self):
         answer = random.randint(0, 9)
         operand1 = random.randint(0, 9)
@@ -385,3 +389,18 @@ class KeyPadTest:
 
         return (to_str(operand1), self._OPERATOR_REPR[operator],
                 to_str(operand2), str(answer))
+
+    def start(self):
+        assert not self._active
+        self._active = True
+
+    def stop(self):
+        assert self._active
+        self._active = False
+        self._keypad.set_initial_text()
+
+    def send(self, event):
+        if not self._active:
+            self.start()
+            return True
+        return False

@@ -90,6 +90,7 @@ class Game(GameState):
     def __init__(self, screen):
         self.view = room.View.DEFAULT
         self._images = room.Images(screen)
+        self._keypad_test = room.KeyPadTest(self._images.keypad)
         self._wall_color = color.GREY
         super().__init__(screen)
 
@@ -140,7 +141,7 @@ class Game(GameState):
         self.screen.fill(self._wall_color)
         if self._images.keypad.opened and self.view != room.View.FRONT_KEYPAD:
             # Navigating away from the keypad after opening resets it.
-            self._images.keypad.set_initial_text()
+            self._keypad_test.stop()
             self._images.door.text = self._images.keypad.text
         view = self.view.name.lower()
         getattr(self, f'_draw_{view}')()
@@ -261,3 +262,8 @@ class Game(GameState):
             pygame.display.update()
             self._images.door.text = self._images.keypad.text
         return True
+
+    def handle_keypad_test(self, event):
+        if not self._images.keypad.opened:
+            return False
+        return self._keypad_test.send(event)
