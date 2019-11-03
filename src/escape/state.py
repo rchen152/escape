@@ -138,6 +138,10 @@ class Game(GameState):
         First fills in the wall color, then calls _draw_<lowercase view name>.
         """
         self.screen.fill(self._wall_color)
+        if self._images.keypad.opened and self.view != room.View.FRONT_KEYPAD:
+            # Navigating away from the keypad after opening resets it.
+            self._images.keypad.set_initial_text()
+            self._images.door.text = self._images.keypad.text
         view = self.view.name.lower()
         getattr(self, f'_draw_{view}')()
         pygame.display.update()

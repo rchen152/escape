@@ -6,7 +6,7 @@ import pygame
 from pygame.locals import *
 import random
 import string
-from typing import Dict, List, Tuple
+from typing import Dict, List, NamedTuple, Tuple
 from . import color
 from . import img
 
@@ -272,6 +272,13 @@ class MiniLightSwitch(LightSwitchBase):
                          screen, (RECT.w * 7 / 8, RECT.h / 2), (-0.5, -1))
 
 
+class _KeyPadText(NamedTuple):
+    value: str
+    pos: Tuple[int, int]
+    font: pygame.font.Font
+    color: Tuple[int, int, int]
+
+
 class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
 
     _DIGITS = {
@@ -288,10 +295,23 @@ class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
     }
     _FONT_SIZE = 90
     _MAX_TEXT_LENGTH = 4
+    _TEXT_POS = (405, 50)
 
     def __init__(self, screen):
         super().__init__('keypad', screen, (RECT.w / 2, 0), (-0.5, 0))
-        self.text = ''
+        self.set_initial_text()
+
+    def set_initial_text(self):
+        self._text = _KeyPadText(value='', pos=self._TEXT_POS, font=self._font,
+                                 color=color.BLACK)
+
+    @property
+    def text(self):
+        return self._text.value
+
+    @text.setter
+    def text(self, value):
+        self._text = self._text._replace(value=value)
 
     @property
     def opened(self):
@@ -305,8 +325,8 @@ class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
 
     def draw(self):
         super().draw()
-        self._screen.blit(
-            self._font.render(self.text, 0, color.BLACK), (405, 50))
+        text = self._text.font.render(self.text, 0, self._text.color)
+        self._screen.blit(text, self._text.pos)
 
 
 class Images:
