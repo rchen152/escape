@@ -419,18 +419,29 @@ class KeyPadTest:
                       int.__truediv__: '/'}
     _OPERATORS = tuple(_OPERATOR_REPR)
 
+    _SPECIAL_QUESTION = ('1', '+', '1', '3')
+
     def __init__(self, keypad, door):
         self._keypad = keypad
         self._door = door
+        self._init_state()
+
+    def _init_state(self):
         self._active = False
         self._question = None
+        self._special_question_position = random.randint(9, 14)
+        self._num_questions_asked = 0
 
     def _generate_question(self):
+        if self._num_questions_asked == self._special_question_position:
+            return self._SPECIAL_QUESTION
         answer = random.randint(0, 9)
         operand1 = random.randint(0, 9)
         operator_idx = random.randint(0, 3)
         operator = self._OPERATORS[operator_idx]
         if not operand1 and operator_idx % 2:  # avoid 0 * x and x / 0
+            return self._generate_question()
+        elif answer == 2 and operand1 == 1 and not operator_idx:  # avoid 1 + 1
             return self._generate_question()
         # Use the inverse operator to compute the other operand.
         operand2 = self._OPERATORS[(operator_idx + 2) % 4](answer, operand1)
@@ -453,6 +464,13 @@ class KeyPadTest:
     def _next_question(self):
         self._question = _Question(self._generate_question())
         self._keypad.text = ''.join(self._question.value[:3])
+        self._num_questions_asked += 1
+
+    @property
+    def completed(self):
+        return (self._question and
+                self._question.value == self._SPECIAL_QUESTION and
+                self._keypad.text == _QuestionState.OK.value)
 
     def start(self):
         assert not self._active
@@ -462,8 +480,7 @@ class KeyPadTest:
 
     def stop(self):
         assert self._active
-        self._active = False
-        self._question = None
+        self._init_state()
         self._keypad.set_initial_text()
         self._door.text = self._keypad.text
         pygame.time.set_timer(self._TICK, 0)
@@ -475,6 +492,8 @@ class KeyPadTest:
         elif event.type == self._TICK:
             if self._keypad.text == _QuestionState.ERR.value:
                 self.stop()
+                return True
+            elif self.completed:
                 return True
             elif (not self._question or
                   self._keypad.text == _QuestionState.OK.value):

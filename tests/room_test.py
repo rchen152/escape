@@ -310,6 +310,15 @@ class KeyPadTestTest(test_utils.ImgTestCase):
         self.assertEqual(self._generate_question(3, 4, 0),
                          ('4', '+', '(-1)', '3'))
 
+    def test_skip_special_question_conflict(self):
+        self.assertEqual(self._generate_question(2, 1, 0, add_default=True),
+                         self._DEFAULT_Q)
+
+    def test_special_question(self):
+        self.keypad_test._num_questions_asked = (
+            self.keypad_test._special_question_position)
+        self.assertEqual(self._generate_question(), ('1', '+', '1', '3'))
+
     def test_start(self):
         self.keypad_test._active = False
         self.keypad_test._keypad.text_color = color.BLACK
@@ -367,6 +376,15 @@ class KeyPadTestTest(test_utils.ImgTestCase):
         self._tick()
         self.assertIsNotNone(self.keypad_test._question)
         self.assertIsNot(self.keypad_test._question, question)
+
+    def test_not_completed(self):
+        self.keypad_test._question = None
+        self.assertFalse(self.keypad_test.completed)
+
+    def test_completed(self):
+        self.keypad_test._question = room._Question(('1', '+', '1', '3'))
+        self.keypad_test._keypad.text = 'OK'
+        self.assertTrue(self.keypad_test.completed)
 
 
 class QuestionTest(unittest.TestCase):

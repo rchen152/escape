@@ -309,6 +309,16 @@ class KeyPadTest(GameTestCase):
         self.assertFalse(self.game._images.keypad.text)
         self.assertFalse(self.game._images.door.text)
 
+    def test_win(self):
+        self.game.active = True
+        self.game._images.keypad.text = '9710'
+        self.game._keypad_test.start()
+        self.game._keypad_test._question = room._Question(('1', '+', '1', '3'))
+        self.game.handle_keypad_test(test_utils.MockEvent(KEYDOWN, unicode='3'))
+        self.game.handle_keypad_test(
+            test_utils.MockEvent(room.KeyPadTest._TICK))
+        self.assertFalse(self.game.active)
+
 
 if __name__ == '__main__':
     unittest.main()

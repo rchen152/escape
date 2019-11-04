@@ -270,4 +270,6 @@ class Game(GameState):
         if consumed:
             self._images.keypad.draw()
             pygame.display.update()
+        if self._keypad_test.completed:
+            self.active = False
         return consumed
