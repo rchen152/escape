@@ -168,7 +168,7 @@ class Chest(_TextMixin, _ChestBase):
         if not event.unicode or event.unicode not in string.printable:
             # Aside from backspace, only printable characters are consumed.
             return None
-        return event.unicode
+        return event.unicode.upper()
 
 
 class MiniChest(_ChestBase):

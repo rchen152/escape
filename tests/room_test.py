@@ -93,13 +93,13 @@ class ChestTest(test_utils.ImgTestCase):
         self.assertIs(
             self.chest.send(
                 test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r')), False)
-        self.assertEqual(self.chest.text, 'rrr')
+        self.assertEqual(self.chest.text, 'RRR')
 
     def test_send_printable(self):
         self.assertIs(
             self.chest.send(
                 test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r')), True)
-        self.assertEqual(self.chest.text, 'r')
+        self.assertEqual(self.chest.text, 'R')
 
     def test_opened(self):
         self.chest.text = 'AYP'

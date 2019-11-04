@@ -232,8 +232,8 @@ class ChestTest(GameTestCase):
         consumed = self.game.handle_chest_combo(
             test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r'))
         self.assertTrue(consumed)
-        self.assertEqual(self.game._images.chest.text, 'r')
-        self.assertEqual(self.game._images.mini_chest.text, 'r')
+        self.assertEqual(self.game._images.chest.text, 'R')
+        self.assertEqual(self.game._images.mini_chest.text, 'R')
 
     def test_max_text_length(self):
         self.game.view = room.View.FLOOR
@@ -245,7 +245,7 @@ class ChestTest(GameTestCase):
         consumed = self.game.handle_chest_combo(
             test_utils.MockEvent(KEYDOWN, key=K_r, unicode='r'))
         self.assertTrue(consumed)
-        self.assertEqual(self.game._images.chest.text, 'rrr')
+        self.assertEqual(self.game._images.chest.text, 'RRR')
         self.assertEqual(num_updates_2 - num_updates_1, 3)
         self.assertEqual(self.num_updates, num_updates_2)
 
