@@ -50,7 +50,7 @@ ROTATIONS[View.FRONT_KEYPAD] = {quad: View.FRONT_WALL for quad in Quadrant}
 
 def at_edge(pos):
     x, y = pos
-    return x <= 5 or y <= 5 or RECT.w - x <= 5 or RECT.h - y <= 5
+    return x <= 10 or y <= 10 or RECT.w - x <= 10 or RECT.h - y <= 10
 
 
 def quadrant(pos):
