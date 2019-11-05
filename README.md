@@ -1,5 +1,5 @@
 # Kitty Escape
-`pip install kitty-escape`
+`pip install kitty-escape && kitty-escape`
 
 * `ESC`: quit current screen
 * `F5`: reset view
