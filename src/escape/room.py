@@ -13,6 +13,7 @@ from . import img
 
 RECT = pygame.Rect(0, 0, 1024, 576)
 BACK_WALL = pygame.Rect(RECT.w / 4, RECT.h / 4, RECT.w / 2, RECT.h / 2)
+DOOR_RECT = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
 
 
 class View(enum.Enum):
@@ -79,7 +80,7 @@ def quadrant(pos):
     return Quadrant.BOTTOM
 
 
-def font(size):
+def _font(size):
     return pygame.font.SysFont('couriernew', size, bold=True)
 
 
@@ -132,7 +133,7 @@ class _ChestBase(img.Factory):
 
     def __init__(self, names, screen, position, shift):
         super().__init__(screen)
-        self._font = font(self._FONT_SIZE)
+        self._font = _font(self._FONT_SIZE)
         self._images = [
             img.load(name, screen, position, shift) for name in names]
         self.text = ''
@@ -188,7 +189,7 @@ class _DigitsBase(img.Factory):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)  # pytype: disable=wrong-arg-count
-        self._font = font(self._FONT_SIZE)
+        self._font = _font(self._FONT_SIZE)
         self._digits = tuple(
             self._font.render(d, 0, color.BLACK) for d in self._DIGITS)
 
@@ -200,8 +201,8 @@ class _DigitsBase(img.Factory):
 
 class Door(_DigitsBase):
 
-    _RECT = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
-    _GAP = pygame.Rect(_RECT.right - 5, _RECT.top - 2, 10, _RECT.h + 2)
+    _GAP = pygame.Rect(
+        DOOR_RECT.right - 5, DOOR_RECT.top - 2, 10, DOOR_RECT.h + 2)
 
     _DIGITS = {
         '1': (570, 343),
@@ -235,7 +236,7 @@ class Door(_DigitsBase):
             gap_color = color.DARK_GREY_1
         else:
             gap_color = color.DARK_GREY_2
-        pygame.draw.rect(self._screen, gap_color, self._RECT, 5)
+        pygame.draw.rect(self._screen, gap_color, DOOR_RECT, 5)
         pygame.draw.rect(self._screen, gap_color, self._GAP)
 
     def collidepoint(self, pos):
@@ -311,17 +312,17 @@ class KeyPad(_DigitsBase, _TextMixin, img.PngFactory):
 
     def _resized_text(self, value):
         assert self.opened
-        max_sz = self._font.size(self._opening_input)
-        ft_sz = self._FONT_SIZE
-        ft = self._font
-        sz = ft.size(value)
-        while any(dim > max_dim for dim, max_dim in zip(sz, max_sz)):
-            ft_sz -= 10
-            ft = font(ft_sz)
-            sz = ft.size(value)
-        pos = tuple(self._TEXT_POS[i] + (max_sz[i] - sz[i]) / 2
+        max_size = self._font.size(self._opening_input)
+        font_size = self._FONT_SIZE
+        font = self._font
+        size = font.size(value)
+        while any(dim > max_dim for dim, max_dim in zip(size, max_size)):
+            font_size -= 10
+            font = _font(font_size)
+            size = font.size(value)
+        pos = tuple(self._TEXT_POS[i] + (max_size[i] - size[i]) / 2
                     for i in range(2))
-        return self._text._replace(value=value, pos=pos, font=ft)
+        return self._text._replace(value=value, pos=pos, font=font)
 
     @property
     def text(self):

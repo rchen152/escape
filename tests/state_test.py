@@ -1,14 +1,14 @@
 """Tests for escape.state."""
 
-from escape import room
-from escape import state
-
 import pygame
 from pygame.locals import *
 
 import unittest
 import unittest.mock
 
+from escape import color
+from escape import room
+from escape import state
 from . import test_utils
 
 
@@ -109,11 +109,10 @@ class TitleCardTest(test_utils.ImgTestCase):
                 state.TitleCard(self.screen)
 
 
-class GameTestCase(test_utils.ImgTestCase):
+class GameStateTestCase(test_utils.ImgTestCase):
 
     def setUp(self):
         super().setUp()
-        self.num_updates = 0
         self.patches = {
             mod: test_utils.patch(mod)
             for mod in (
@@ -122,13 +121,20 @@ class GameTestCase(test_utils.ImgTestCase):
                 'pygame.font',
             )}
         self.mocks = {mod: patch.start() for mod, patch in self.patches.items()}
-        self.mocks['pygame.display'].update = self.mock_update
-        self.game = state.Game(self.screen)
 
     def tearDown(self):
         super().tearDown()
         for patch in self.patches.values():
             patch.stop()
+
+
+class GameTestCase(GameStateTestCase):
+
+    def setUp(self):
+        self.num_updates = 0
+        super().setUp()
+        self.mocks['pygame.display'].update = self.mock_update
+        self.game = state.Game(self.screen)
 
     def mock_update(self):
         self.num_updates += 1
@@ -210,6 +216,17 @@ class GameTest(GameTestCase):
         self.game.handle_click(_click(0, 0))
         self.assertEqual(self.game.view, room.View.FRONT_WALL)
         self.assertEqual(self.num_updates, 5)
+
+    def test_ending(self):
+        self.game.active = False
+        self.game._keypad_test._question = room._Question(('1', '+', '1', '3'))
+        self.game._images.keypad.text = 'OK'
+        self.assertIsInstance(self.game.ending(), state.Ending)
+
+    def test_no_ending(self):
+        self.game.active = False
+        self.game._keypad_test._question = None
+        self.assertIsNone(self.game.ending())
 
 
 class ChestTest(GameTestCase):
@@ -318,6 +335,51 @@ class KeyPadTest(GameTestCase):
         self.game.handle_keypad_test(
             test_utils.MockEvent(room.KeyPadTest._TICK))
         self.assertFalse(self.game.active)
+
+
+class EndingTest(GameStateTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.keypad = unittest.mock.MagicMock()
+        self.ending = state.Ending(self.screen, color.GREY, self.keypad)
+
+    def test_keypad(self):
+        self.ending._frame = state._EndingFrame.KEYPAD
+        self.ending.draw()
+        self.assertEqual(self.keypad.draw.call_count, 2)
+
+    def test_keypad_blue(self):
+        self.ending._frame = state._EndingFrame.KEYPAD_BLUE
+        self.ending.draw()
+        self.assertEqual(self.keypad.draw.call_count, 2)
+
+    def test_door(self):
+        self.ending._frame = state._EndingFrame.DOOR
+        self.ending.draw()
+        self.assertEqual(self.keypad.draw.call_count, 1)
+        self.screen.fill.assert_called_with(color.GREY)
+
+    def _test_text_frame(self, frame):
+        self.ending._frame = frame
+        self.ending.draw()
+        self.assertEqual(self.keypad.draw.call_count, 1)
+        self.screen.fill.assert_called_with(color.BLUE)
+
+    def test_congrats(self):
+        self._test_text_frame(state._EndingFrame.CONGRATS)
+
+    def test_detail(self):
+        self._test_text_frame(state._EndingFrame.DETAIL)
+
+    def test_warning(self):
+        self._test_text_frame(state._EndingFrame.WARNING)
+
+    def test_fin(self):
+        self.ending.active = True
+        self.ending._frame = state._EndingFrame.FIN - 1
+        self.ending.handle_tick(test_utils.MockEvent(state.Ending._TICK))
+        self.assertFalse(self.ending.active)
 
 
 if __name__ == '__main__':

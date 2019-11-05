@@ -19,7 +19,11 @@ def main():
     pygame.display.set_caption('Kitty Escape')
     if not args.skip_title:
         state.TitleCard(screen).run()
-    state.Game(screen).run()
+    game = state.Game(screen)
+    game.run()
+    ending = game.ending()
+    if ending:
+        ending.run()
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 """Game state."""
 
 import abc
+import enum
 import pygame
 from pygame.locals import *
 from . import color
@@ -273,3 +274,85 @@ class Game(GameState):
         if self._keypad_test.completed:
             self.active = False
         return consumed
+
+    def ending(self):
+        assert not self.active
+        if self._keypad_test.completed:
+            return Ending(self.screen, self._wall_color, self._images.keypad)
+        return None
+
+
+class _EndingFrame(enum.IntEnum):
+    """Frames of the ending sequence.
+
+    Each frame is displayed for
+    (next_frame - current_frame) * Ending._WAIT_INTERVAL_MS milliseconds.
+    """
+    KEYPAD = 0
+    KEYPAD_BLUE = 1
+    DOOR = 2
+    CONGRATS = 3
+    DETAIL = 4
+    WARNING = 6
+    FIN = 8
+
+
+class Ending(GameState):
+
+    _TICK = pygame.USEREVENT
+    _WAIT_INTERVAL_MS = 1250
+
+    _OPEN_DOOR = [room.DOOR_RECT.topleft,
+                  (room.DOOR_RECT.left + 20, room.DOOR_RECT.top + 20),
+                  (room.DOOR_RECT.left + 20, room.DOOR_RECT.bottom - 10),
+                  room.DOOR_RECT.bottomleft]
+
+    def __init__(self, screen, wall_color, keypad):
+        self._wall_color = wall_color
+        self._keypad = keypad
+        self._frame = 0
+        self._font = pygame.font.SysFont('couriernew', 100, bold=True)
+        super().__init__(screen)
+        pygame.time.set_timer(self._TICK, self._WAIT_INTERVAL_MS)
+
+    def _render_text(self, text, raw_pos):
+        surface = self._font.render(text, 0, color.BLACK)
+        size = surface.get_size()
+        pos = tuple(raw_pos[i] - size[i] / 2 for i in range(2))
+        self.screen.blit(surface, pos)
+
+    def draw(self):
+        if self._frame in (_EndingFrame.KEYPAD, _EndingFrame.KEYPAD_BLUE):
+            self.screen.fill(color.DARK_GREY_2)
+            self._keypad.draw()
+        elif self._frame == _EndingFrame.DOOR:
+            self.screen.fill(self._wall_color)
+            pygame.draw.rect(self.screen, color.BLUE, room.DOOR_RECT)
+            pygame.draw.polygon(self.screen, color.DARK_GREY_2, self._OPEN_DOOR)
+            pygame.draw.rect(self.screen, color.BLACK, room.DOOR_RECT, 5)
+        else:
+            self.screen.fill(color.BLUE)
+            self._render_text('Congratulations',
+                              (room.RECT.w / 2, room.RECT.h / 4))
+            if self._frame >= _EndingFrame.DETAIL:
+                self._render_text('you escaped',
+                                  (room.RECT.w / 2, room.RECT.h / 2))
+            if self._frame >= _EndingFrame.WARNING:
+                self._render_text('for now...',
+                                  (room.RECT.w / 2, 3 * room.RECT.h / 4))
+        pygame.display.update()
+
+    def handle_tick(self, event):
+        if event.type != self._TICK:
+            return False
+        self._frame += 1
+        if self._frame == _EndingFrame.FIN:
+            self.active = False
+            return True
+        elif self._frame == _EndingFrame.KEYPAD_BLUE:
+            self._keypad.text_color = color.BLUE
+        self.draw()
+        return True
+
+    def cleanup(self):
+        pygame.time.set_timer(self._TICK, 0)
