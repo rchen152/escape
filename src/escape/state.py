@@ -9,8 +9,9 @@ from . import img
 from . import room
 
 
-def _keypressed(event, key):
-    return event.type == KEYDOWN and event.key == key
+def _keypressed(event, key, mod=None):
+    return (event.type == KEYDOWN and event.key == key and
+            (mod is None or event.mod & mod))
 
 
 class GameState(abc.ABC):
@@ -36,7 +37,7 @@ class GameState(abc.ABC):
         pass
 
     def handle_quit(self, event):
-        if event.type == QUIT or _keypressed(event, K_ESCAPE):
+        if event.type == QUIT or _keypressed(event, K_c, KMOD_CTRL):
             self.active = False
             return True
         return False
@@ -229,7 +230,7 @@ class Game(GameState):
         return consumed
 
     def handle_reset(self, event):
-        if not _keypressed(event, K_F5):
+        if not _keypressed(event, K_ESCAPE):
             return False
         if self.view is not room.View.DEFAULT:
             self.view = room.View.DEFAULT
