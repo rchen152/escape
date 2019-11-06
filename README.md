@@ -6,3 +6,5 @@
 * `F11`: fullscreen
 
 Interact with the room by clicking. Input characters by typing them.
+
+Hint: how many walls does a room have?
