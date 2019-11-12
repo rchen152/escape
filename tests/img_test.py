@@ -2,7 +2,6 @@
 
 from escape import img
 import unittest
-import unittest.mock
 from . import test_utils
 
 
