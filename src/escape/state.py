@@ -292,10 +292,10 @@ class _EndingFrame(enum.IntEnum):
     KEYPAD = 0
     KEYPAD_BLUE = 1
     DOOR = 2
-    CONGRATS = 3
-    DETAIL = 4
-    WARNING = 6
-    FIN = 8
+    CONGRATS = 4
+    DETAIL = 5
+    WARNING = 7
+    FIN = 9
 
 
 class Ending(GameState):
@@ -326,7 +326,7 @@ class Ending(GameState):
         if self._frame in (_EndingFrame.KEYPAD, _EndingFrame.KEYPAD_BLUE):
             self.screen.fill(color.DARK_GREY_2)
             self._keypad.draw()
-        elif self._frame == _EndingFrame.DOOR:
+        elif self._frame < _EndingFrame.CONGRATS:
             self.screen.fill(self._wall_color)
             pygame.draw.rect(self.screen, color.BLUE, room.DOOR_RECT)
             pygame.draw.polygon(self.screen, color.DARK_GREY_2, self._OPEN_DOOR)
