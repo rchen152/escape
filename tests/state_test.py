@@ -102,14 +102,6 @@ class GameStateTest(unittest.TestCase):
         self.assertTrue(self.state.clean)
 
 
-class TitleCardTest(test_utils.ImgTestCase):
-
-    def test_init(self):
-        with test_utils.patch('pygame.display', autospec=True):
-            with test_utils.patch('pygame.transform', autospec=True):
-                state.TitleCard(self.screen)
-
-
 class GameStateTestCase(test_utils.ImgTestCase):
 
     def setUp(self):

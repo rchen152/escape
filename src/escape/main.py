@@ -1,5 +1,6 @@
 """Main entrypoint."""
 import argparse
+from common import state as common_state
 import pygame
 from . import room
 from . import state
@@ -18,7 +19,7 @@ def main():
     screen = pygame.display.set_mode(room.RECT.size)
     pygame.display.set_caption('Kitty Escape')
     if not args.skip_title:
-        state.TitleCard(screen).run()
+        common_state.TitleCard(screen).run()
     game = state.Game(screen)
     game.run()
     ending = game.ending()

@@ -5,7 +5,6 @@ import enum
 import pygame
 from pygame.locals import *
 from . import color
-from . import img
 from . import room
 
 
@@ -60,31 +59,6 @@ class GameState(abc.ABC):
                     if consumed:
                         break
         self.cleanup()
-
-
-class TitleCard(GameState):
-
-    _TIMED_QUIT = pygame.USEREVENT
-    _DISPLAY_TIME_MS = 5000
-
-    def __init__(self, screen):
-        self._title_card_img = img.load('title_card', screen)
-        super().__init__(screen)
-        pygame.time.set_timer(self._TIMED_QUIT, self._DISPLAY_TIME_MS)
-
-    def draw(self):
-        self.screen.fill(color.BLUE)
-        self._title_card_img.draw()
-        pygame.display.update()
-
-    def handle_quit(self, event):
-        if event.type == self._TIMED_QUIT:
-            self.active = False
-            return True
-        return super().handle_quit(event)
-
-    def cleanup(self):
-        pygame.time.set_timer(self._TIMED_QUIT, 0)
 
 
 class Game(GameState):
