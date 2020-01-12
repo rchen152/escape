@@ -1,15 +1,15 @@
 """Game room."""
 
 import abc
+from common import img
 from common import state as common_state
 import enum
 import pygame
 from pygame.locals import *
+from common import color  # needs to come after pygame.locals.*
 import random
 import string
 from typing import Dict, List, NamedTuple, Tuple
-from common import color  # needs to come after pygame.locals.*
-from . import img
 
 
 RECT = common_state.RECT
@@ -160,8 +160,10 @@ class Chest(_TextMixin, _ChestBase):
     _MAX_TEXT_LENGTH = 3
 
     def __init__(self, screen):
+        # pytype: disable=wrong-arg-count
         super().__init__(('chest', 'chest_opened'), screen,
                          (RECT.w / 2, 2 * RECT.h / 3), (-0.5, -1))
+        # pytype: enable=wrong-arg-count
 
     def accept_event(self, event):
         return event.type == KEYDOWN and not self.opened
