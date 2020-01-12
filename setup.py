@@ -3,7 +3,7 @@
 import os
 from setuptools import find_packages, setup
 
-_VERSION = '1.0.0'
+_VERSION = '1.1.0'
 
 
 def get_long_description():
@@ -30,5 +30,8 @@ setup(
     entry_points={
         'console_scripts': ['kitty-escape = escape.main:main'],
     },
-    install_requires=['pygame==1.9.6'],
+    install_requires=[
+        'kitty-common>=0.1.1',
+        'pygame==1.9.6',
+    ],
 )

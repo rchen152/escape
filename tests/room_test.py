@@ -7,8 +7,8 @@ import unittest
 import unittest.mock
 
 from common import color  # needs to come after pygame.locals.*
+from common import test_utils
 from escape import room
-from . import test_utils
 
 
 class AtEdgeTest(unittest.TestCase):

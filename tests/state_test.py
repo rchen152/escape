@@ -6,35 +6,16 @@ import unittest
 import unittest.mock
 
 from common import color  # needs to come after pygame.locals.*
+from common import test_utils
 from escape import room
 from escape import state
-from . import test_utils
 
 
 def _click(x, y):
     return test_utils.MockEvent(MOUSEBUTTONDOWN, button=1, pos=(x, y))
 
 
-class GameStateTestCase(test_utils.ImgTestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.patches = {
-            mod: test_utils.patch(mod)
-            for mod in (
-                'pygame.display',
-                'pygame.draw',
-                'pygame.font',
-            )}
-        self.mocks = {mod: patch.start() for mod, patch in self.patches.items()}
-
-    def tearDown(self):
-        super().tearDown()
-        for patch in self.patches.values():
-            patch.stop()
-
-
-class GameTestCase(GameStateTestCase):
+class GameTestCase(test_utils.GameStateTestCase):
 
     def setUp(self):
         self.num_updates = 0
@@ -243,7 +224,7 @@ class KeyPadTest(GameTestCase):
         self.assertFalse(self.game.active)
 
 
-class EndingTest(GameStateTestCase):
+class EndingTest(test_utils.GameStateTestCase):
 
     def setUp(self):
         super().setUp()
