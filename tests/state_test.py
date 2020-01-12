@@ -5,7 +5,7 @@ from pygame.locals import *
 import unittest
 import unittest.mock
 
-from escape import color
+from common import color  # needs to come after pygame.locals.*
 from escape import room
 from escape import state
 from . import test_utils

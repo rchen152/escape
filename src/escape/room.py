@@ -8,7 +8,7 @@ from pygame.locals import *
 import random
 import string
 from typing import Dict, List, NamedTuple, Tuple
-from . import color
+from common import color  # needs to come after pygame.locals.*
 from . import img
 
 

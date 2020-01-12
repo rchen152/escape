@@ -6,7 +6,7 @@ import random
 import unittest
 import unittest.mock
 
-from escape import color
+from common import color  # needs to come after pygame.locals.*
 from escape import room
 from . import test_utils
 

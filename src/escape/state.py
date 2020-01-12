@@ -4,7 +4,7 @@ from common import state
 import enum
 import pygame
 from pygame.locals import *
-from . import color
+from common import color  # needs to come after pygame.locals.*
 from . import room
 
 
