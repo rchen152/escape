@@ -1,6 +1,6 @@
 """Game state."""
 
-import abc
+from common import state
 import enum
 import pygame
 from pygame.locals import *
@@ -8,60 +8,7 @@ from . import color
 from . import room
 
 
-def _keypressed(event, key, mod=None):
-    return (event.type == KEYDOWN and event.key == key and
-            (mod is None or event.mod & mod))
-
-
-class GameState(abc.ABC):
-    """Base class for tracking game state.
-
-    run() checks the event queue in a loop until a quit event is received. For
-    each event, every handle_* method is called until the event is consumed. A
-    handler reports that it consumed an event by returning True.
-    """
-
-    def __init__(self, screen):
-        self.screen = screen
-        self.active = True
-        self.draw()
-        self._event_handlers = [
-            getattr(self, x) for x in dir(self) if x.startswith('handle_')]
-
-    @abc.abstractmethod
-    def draw(self):
-        pass
-
-    def cleanup(self):
-        pass
-
-    def handle_quit(self, event):
-        if event.type == QUIT or _keypressed(event, K_c, KMOD_CTRL):
-            self.active = False
-            return True
-        return False
-
-    def handle_fullscreen(self, event):
-        if not _keypressed(event, K_F11):
-            return False
-        if self.screen.get_flags() & FULLSCREEN:
-            pygame.display.set_mode(room.RECT.size)
-        else:
-            pygame.display.set_mode(room.RECT.size, FULLSCREEN)
-        self.draw()
-        return True
-
-    def run(self):
-        while self.active:
-            for event in pygame.event.get():
-                for handle in self._event_handlers:
-                    consumed = handle(event)
-                    if consumed:
-                        break
-        self.cleanup()
-
-
-class Game(GameState):
+class Game(state.GameState):
 
     def __init__(self, screen):
         self.view = room.View.DEFAULT
@@ -204,7 +151,7 @@ class Game(GameState):
         return consumed
 
     def handle_reset(self, event):
-        if not _keypressed(event, K_ESCAPE):
+        if not state.keypressed(event, K_ESCAPE):
             return False
         if self.view is not room.View.DEFAULT:
             self.view = room.View.DEFAULT
@@ -272,7 +219,7 @@ class _EndingFrame(enum.IntEnum):
     FIN = 9
 
 
-class Ending(GameState):
+class Ending(state.GameState):
 
     _TICK = pygame.USEREVENT
     _WAIT_INTERVAL_MS = 1250
