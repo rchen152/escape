@@ -1,6 +1,7 @@
 """Game room."""
 
 import abc
+from common import state as common_state
 import enum
 import pygame
 from pygame.locals import *
@@ -11,7 +12,7 @@ from . import color
 from . import img
 
 
-RECT = pygame.Rect(0, 0, 1024, 576)
+RECT = common_state.RECT
 BACK_WALL = pygame.Rect(RECT.w / 4, RECT.h / 4, RECT.w / 2, RECT.h / 2)
 DOOR_RECT = pygame.Rect(2 * RECT.w / 5, RECT.h / 4, RECT.w / 5, 3 * RECT.h / 4)
 
