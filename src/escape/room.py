@@ -127,17 +127,18 @@ class _TextMixin(abc.ABC):
         return True
 
 
-class _ChestBase(img.Factory):
+class _ChestBase(img.RectFactory):
 
     _CHARPOS: List[Tuple[int, int]]
     _FONT_SIZE: int
 
     def __init__(self, names, screen, position, shift):
         super().__init__(screen)
+        self.text = ''
         self._font = _font(self._FONT_SIZE)
         self._images = [
             img.load(name, screen, position, shift) for name in names]
-        self.text = ''
+        self.RECT = self._images[self.opened].RECT
 
     @property
     def opened(self):
@@ -148,9 +149,6 @@ class _ChestBase(img.Factory):
         if not self.opened:
             for c, pos in zip(self.text, self._CHARPOS):
                 self._screen.blit(self._font.render(c, 0, color.BLACK), pos)
-
-    def collidepoint(self, pos):
-        return self._images[self.opened].collidepoint(pos)
 
 
 class Chest(_TextMixin, _ChestBase):
@@ -246,7 +244,7 @@ class Door(_DigitsBase):
         return (self._door if self.revealed else self._GAP).collidepoint(pos)
 
 
-class LightSwitchBase(img.Factory):
+class LightSwitchBase(img.RectFactory):
 
     def __init__(self, names, screen, position, shift):
         assert len(names) == 2  # image names for off and on positions
@@ -254,12 +252,10 @@ class LightSwitchBase(img.Factory):
         self.on = True
         self._images = [
             img.load(name, screen, position, shift) for name in names]
+        self.RECT = self._images[self.on].RECT
 
     def draw(self):
         self._images[self.on].draw()
-
-    def collidepoint(self, pos):
-        return self._images[self.on].collidepoint(pos)
 
 
 class LightSwitch(LightSwitchBase):

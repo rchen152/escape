@@ -31,7 +31,7 @@ setup(
         'console_scripts': ['kitty-escape = escape.main:main'],
     },
     install_requires=[
-        'kitty-common>=0.1.1',
+        'kitty-common>=0.2.0',
         'pygame==1.9.6',
     ],
 )
