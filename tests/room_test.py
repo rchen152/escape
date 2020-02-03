@@ -174,13 +174,15 @@ class LightSwitchTest(test_utils.ImgTestCase):
         self.light_switch.on = True
         self.light_switch.draw()
         expected = self.light_switch._images[1]
-        self.screen.blit.assert_called_once_with(expected._img, expected._pos)
+        self.screen.blit.assert_called_once_with(
+            expected._img, expected.RECT.topleft)
 
     def test_off(self):
         self.light_switch.on = False
         self.light_switch.draw()
         expected = self.light_switch._images[0]
-        self.screen.blit.assert_called_once_with(expected._img, expected._pos)
+        self.screen.blit.assert_called_once_with(
+            expected._img, expected.RECT.topleft)
 
     def test_collidepoint(self):
         self.assertTrue(self.light_switch.collidepoint(
