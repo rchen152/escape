@@ -33,4 +33,7 @@ jobs:
       run: pytype
 
     - name: Test
+      env:
+        SDL_VIDEODRIVER: "dummy"
+        SDL_AUDIODRIVER: "disk"
       run: ./tests/run.sh

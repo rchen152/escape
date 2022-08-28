@@ -1,5 +1,5 @@
 flake8
-kitty-common>=0.5.2
+kitty-common>=0.5.3
 pygame
 pytest
 pytype
