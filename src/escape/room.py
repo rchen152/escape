@@ -203,7 +203,7 @@ class _DigitsBase(img.Factory):
 class Door(_DigitsBase):
 
     _GAP = pygame.Rect(
-        DOOR_RECT.right - 5, DOOR_RECT.top - 2, 10, DOOR_RECT.h + 2)
+        DOOR_RECT.right - 5, DOOR_RECT.top, 10, DOOR_RECT.h)
 
     _DIGITS = {
         '1': (570, 343),
