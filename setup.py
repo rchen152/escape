@@ -3,7 +3,7 @@
 import os
 from setuptools import find_packages, setup
 
-_VERSION = '1.2.1'
+_VERSION = '1.2.2'
 
 
 def get_long_description():
@@ -26,12 +26,12 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: POSIX :: Linux',
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     entry_points={
         'console_scripts': ['kitty-escape = escape.main:main'],
     },
     install_requires=[
-        'kitty-common>=0.5.3',
-        'pygame',
+        'kitty-common>=0.5.4',
+        'pygame>=2.1.2',
     ],
 )
